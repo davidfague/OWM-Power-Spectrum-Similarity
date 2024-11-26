@@ -1,0 +1,33 @@
+function ES = compute_ES(Zpower, window_start_times, window_end_times, window_IDs1, window_IDs2, ES_freq_band, save_mean_PS_vectors)
+    % Zpower is frequency X nTimes
+    % for every window, get the average Zpower in the window
+    % output matrix should be
+    similarity_matrix = zeros(length(window_IDs1), length(window_IDs2));
+
+    window1_mean_PS_vectors = zeros(length(window_IDs1), length(ES_freq_band));
+    window2_mean_PS_vectors = zeros(length(window_IDs2), length(ES_freq_band));
+    
+    for window1_ID = window_IDs1
+        window1_mean_power_spectrum_vector = mean(Zpower(ES_freq_band, window_start_times(window1_ID):window_end_times(window1_ID)), 2);
+        window1_mean_power_spectrum_vector(:);
+        for window2_ID = window_IDs2
+
+            window2_mean_power_spectrum_vector = mean(Zpower(ES_freq_band, window_start_times(window2_ID):window_end_times(window2_ID)), 2);
+            window2_mean_power_spectrum_vector(:);
+    
+            r = corr(window1_mean_power_spectrum_vector, window2_mean_power_spectrum_vector, 'type', 'spearman');
+            z = 0.5 * log((1 + r) / (1 - r));
+    
+            similarity_matrix(window1_ID, window2_ID) = z;
+
+            window2_mean_PS_vectors(window2_ID, :) = window2_mean_power_spectrum_vector;
+        end
+        window1_mean_PS_vectors(window1_ID, :) = window1_mean_power_spectrum_vector;
+    end
+    if save_mean_PS_vectors
+        %save them
+    end
+    %return similarity matrix
+    clear r z window1_mean_power_spectrum_vector window2_mean_power_spectrum_vector
+
+end

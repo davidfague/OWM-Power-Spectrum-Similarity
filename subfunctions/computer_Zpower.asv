@@ -1,0 +1,9 @@
+function [Zpower] = compute_Zpower(data)
+    % 1 channel selected;
+    % data should be 1x9001 1xnTimes
+    
+    
+    % Define parameters for time-frequency analysis
+    Fre = 1:100; % Frequency range from 1 to 100 Hz
+    Fsample = 1000; % Sampling frequency in Hz
+    wavenum = 6; % Number of cycles in the wavelet
