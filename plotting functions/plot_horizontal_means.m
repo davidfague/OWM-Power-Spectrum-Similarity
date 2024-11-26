@@ -1,4 +1,12 @@
-function plot_horizontal_means(data_vector)
+function plot_horizontal_means(data_vector, options)
+    % plot_horizontal_means - Plots horizontal means with optional line style and color
+    % 
+    % Inputs:
+    %   data_vector: Vector of data values
+    %   options (optional): Structure with the following fields:
+    %       - 'DashedLines' (logical): Use dashed lines if true (default: false)
+    %       - 'LineColor' (1x3 vector): RGB color for the lines (default: [0.6 0.6 0.6])
+    %
     % Use the same index ranges as defined in add_event_lines function
     index_adjust = -5;  % Center adjustment (must match the adjustment in add_event_lines)
     
@@ -11,6 +19,19 @@ function plot_horizontal_means(data_vector)
         200 + index_adjust, 250 + index_adjust; % Enc2 to end of enc3
         250 + index_adjust, 640 + index_adjust; % Enc3 to end of maintenance
     ];
+
+    % Set default options if not provided
+    if nargin < 2 || isempty(options)
+        options.DashedLines = false;
+        options.LineColor = [0.6 0.6 0.6];
+    end
+    
+    % Set line style based on options
+    if options.DashedLines
+        lineStyle = '--';
+    else
+        lineStyle = '-';
+    end
     
     % Check if the figure is held, if not hold it
     wasHold = ishold;
@@ -26,7 +47,8 @@ function plot_horizontal_means(data_vector)
         mean_value = mean(data_vector(start_idx:end_idx));
         
         % Plot a horizontal line at the mean value within the given range
-        plot([start_idx, end_idx], [mean_value, mean_value], 'LineWidth', 2, 'Color', [0.6 0.6 0.6]);
+        plot([start_idx, end_idx], [mean_value, mean_value], ...
+            'LineWidth', 2, 'Color', options.LineColor, 'LineStyle', lineStyle);
     end
     
     % Restore hold state
@@ -34,3 +56,4 @@ function plot_horizontal_means(data_vector)
         hold off;
     end
 end
+
