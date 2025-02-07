@@ -7,96 +7,25 @@
 %% v3: use get_parameters.m
 %% v2: remove the without_nan subsetting of label_table and PSVs to keep indexing inconsistent; also begin saving only unique results
 % also only save the unique trial pairs, do not oversample.
-addpath('../subfunctions')
+
+%% parameters
+
 custom_params = struct();
-custom_params.k12wm = true;
+custom_params.k12wm = false;
+custom_params.patient_IDs = [201901];
+custom_params.output_folder_name = 'middle_fixation_baseline';
+
 % custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
 params = get_parameters(custom_params);
     % temp params
 % params.within_item = false; % computes control as either within item or between items
 % params.btwn_trial_type = 'EMS'; % default should be 'EMS'
+
 target_enc_ids = 1; 
 target_image_ids = 1:9;
-% params.control_enc_ids = 1:3;
-% params.patient_IDs = [201902, 201905, 201907];
-% params.patient_IDs = [201902, 201907];
-
-
-if params.hellbender
-    % addpath 'Raw Data Storage'               %#ok<UNRCH>
-    addpath 'subfunctions'
-else
-    % addpath('../Z_Raw Data Storage')      %#ok<UNRCH>    
-    addpath('../subfunctions')
-end
-%%
-function session_ids = get_available_session_ids(params, patient_ID)
-% GET_AVAILABLE_SESSION_IDS returns the session IDs available for a given patient.
-%
-%   session_ids = GET_AVAILABLE_SESSION_IDS(params, patient_ID) searches the folder
-%   specified by params.output_folder for a subfolder corresponding to patient_ID and
-%   finds all files that match the pattern 'PSVs*.mat'. It then extracts the session IDs
-%   (the part after 'PSVs' and before '.mat') and returns them as a numeric array.
-%
-%   Inputs:
-%       params     - A structure that must include at least the field:
-%                       output_folder : path to the folder containing patient folders.
-%       patient_ID - A number or string identifying the patient.
-%
-%   Output:
-%       session_ids - A numeric array of session IDs available for the patient.
-%
-%   Example:
-%       params.output_folder = '/path/to/output';
-%       patient_ID = 101;
-%       session_ids = get_available_session_ids(params, patient_ID);
-%
-%   See also: DIR, FULLFILE, STR2DOUBLE.
-
-    % Convert patient_ID to string in case it is numeric.
-    patient_folder = fullfile(params.output_folder, num2str(patient_ID));
-    
-    % Check if the patient folder exists.
-    if ~exist(patient_folder, 'dir')
-        error('Patient folder "%s" does not exist.', patient_folder);
-    end
-
-    % Build the file pattern. We expect files named like: 'PSVs<session_id>.mat'
-    file_pattern = fullfile(patient_folder, 'PSVs*.mat');
-    file_list = dir(file_pattern);
-    
-    if isempty(file_list)
-        warning('No session files found for patient %s in folder %s.', num2str(patient_ID), patient_folder);
-        session_ids = [];
-        return;
-    end
-    
-    % Loop through the files and extract session IDs.
-    session_ids = [];  % initialize as empty
-    for k = 1:length(file_list)
-        filename = file_list(k).name;
-        % We expect the filename to start with 'PSVs' and end with '.mat'
-        prefix = 'PSVs';
-        suffix = '.mat';
-        if startsWith(filename, prefix) && endsWith(filename, suffix)
-            % Extract the portion between the prefix and suffix.
-            session_str = filename(length(prefix)+1 : end-length(suffix));
-            session_num = str2double(session_str);
-            if ~isnan(session_num)
-                session_ids(end+1) = session_num;  %#ok<AGROW>
-            else
-                warning('Could not convert session ID "%s" from file "%s" to a number.', session_str, filename);
-            end
-        else
-            warning('File "%s" does not match the expected pattern "PSVs<session_id>.mat".', filename);
-        end
-    end
-    
-    % Sort session IDs in ascending order.
-    session_ids = sort(session_ids);
-end
 
 %% main loop
+
 for idx = 1:length(params.patient_IDs)
     patient_ID = params.patient_IDs(idx);
     if params.k12wm
@@ -129,6 +58,7 @@ for idx = 1:length(params.patient_IDs)
     end
 end
 %% main computations
+
 function [all_channels_save_file] = compute_all_between_trial_similarities(patient_ID, target_enc_ids, target_image_ids, params, label_table, all_window_mean_PS_vectors)
 % would need reworking to accept all 3 encodings at once. Have to select
 % enc_win_IDs based on the encID where the thing is found.
@@ -304,35 +234,3 @@ function pairs_list = filter_trial_pairs_for_within_item(pairs_list, num_ctrl_tr
         invalid_idx = pairs_list(:,1) == pairs_list(:,2);
     end
 end
-
-%% deprecated
-
-% function [label_table, all_window_mean_PS_vectors] = get_cleaned_data(data_file)
-%     label_table = data_file.label_table;
-%     rows_with_nan = any(isnan(label_table.EMS_means), 2);
-%     rows_without_nan = ~rows_with_nan;
-%     label_table = label_table(~rows_with_nan,:);
-%     all_windowed_mean_PS_vectors = data_file.all_windowed_mean_PS_vectors(:,:,:);
-%     all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,:,rows_without_nan);
-% 
-%     % remove rows from label_table and all_windowed_mean_PS_vectors if
-%     % there are any nans in that row of all_windowed_mean_PS_vectors.
-%     reshaped_matrix = reshape(all_windowed_mean_PS_vectors, [], size(all_windowed_mean_PS_vectors, 3));% Reshape the matrix to combine the first two dimensions (891x40) into one
-% 
-%     nan_vector = any(isnan(reshaped_matrix), 1);  %Check for NaNs along the new combined dimension
-%     clear reshaped_matrix
-%     nan_vector = nan_vector(:); % Convert the result to a column vector
-% 
-%     all_window_mean_PS_vectors = all_windowed_mean_PS_vectors(:,:,~nan_vector);
-%     label_table = label_table(~nan_vector,:);
-% end
-
-% function [label_table, all_windowed_mean_PS_vectors] = get_cleaned_data(PS_file)
-% label_table = PS_file.label_table;
-% % rows_without_nan = get_rows_without_nan(label_table);
-% 
-% % label_table = label_table(:,:);
-% all_windowed_mean_PS_vectors = PS_file.all_windowed_mean_PS_vectors(:,:,:);
-% % all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,:,rows_without_nan);
-% 
-% end
