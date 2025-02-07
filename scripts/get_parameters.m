@@ -6,7 +6,8 @@ function params = get_parameters(custom_params, save_script, save_values)
 
 %% specify working directory
 
-working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\';
+% check local directory below too
+working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
 
 %% addpath all utils
 
@@ -35,22 +36,6 @@ function addSubDirs(dirName)
     end
 end
 
-% % deprecating
-% files = dir(utils_dir);
-% for i = 1:length(files)
-%     file = fullfile(files(i));
-%     if file.isdir && ~ismember(file.name, ['.', '..', '.git'])
-%         addpath(fullfile(file.folder, file.name))
-%         files_within = dir(file);
-%         for j = 1:length(files_within)
-%             file_within = files_within(j);
-%             if file_within.isdir && ~ismember(file_wthin.name, ['.', '..', '.git'])
-%                 addpath(fullfile(file_within.folder, file_within.name))
-%             end
-%         end
-%     end
-% end
-
 %% defaults 
 
 params = struct();
@@ -60,6 +45,7 @@ params.num_wrkrs_hb = 64;
 params.num_wrkrs_local = 2;
 params.init_par_pool = false;  % enable to run parfor
 params.output_folder_name = 'allpatients gammamod allregions allitem allenc baseline across trials';
+params.processed_data_dir = '../processed_data/';
 
 %% Override first set of defaults with any custom parameters
 
@@ -84,28 +70,28 @@ end
 %% logic and extras
 
 if params.hellbender
-    params.patient_IDs = [201907, 201908, 201903, 201905, 201906, 201901, 201910, 201915];
+    params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
     params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/', params.output_folder_name);
     params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/');
     params.local_directory = fullfile('/home/drfrbc/Power Spectrum Similarity/');
 else
-    params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];%[201903, 201905, 201906, 201915];
-    params.output_folder = fullfile('..\AA_Processed Data\', params.output_folder_name);
+    params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
+    params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name);
     params.preprocessed_data_location = fullfile('../../../..//OWM Utah Data/');
-    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\Power Spectrum Similarity\');
+    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
 end
 
 if params.k12wm
     params.time = 1:7001;
     params.patient_IDs = [004, 005, 006, 007, 008, 009, 010];
-    params.output_folder = fullfile('..\AA_Processed Data\', params.output_folder_name, '\k12wm\');
+    params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');
     params.preprocessed_data_location = fullfile('../../../..//k12wm/');
-    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\Power Spectrum Similarity\');
+    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
 else
     params.time = 1:9001;
 end
 
-%% processing hyper-parameters
+%% hyper-parameters for processing
 
 % Define the time windows for each encoding period
 params.stim1_start = 1000; params.stim1_end = 1500; % stim 1 time window
