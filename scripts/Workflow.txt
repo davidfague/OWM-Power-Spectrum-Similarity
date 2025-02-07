@@ -1,0 +1,10 @@
+0. get_parameters.m can be adjusted to manipulate the hyperparameters, analysis methods, etc.
+
+1. Zpower_and_PSVs_v6.m computes the Zpower and Power Spectrum Vectors according to windowing, baselining defined in params, saving large PSVs matrix and label_table both with length (nChannels * nTrials). all_windowed_mean_PS_vectors (PSVs) shape: (nTimeWindows, nPSV_Frequencies, (nChannels * nTrials))
+
+2. within_trials_ES_v2.m computes the within-trial encoding-wholeTrial(excluding Recall) similarity for each encoding using the frequencies specified by params.ES_freq_band. 
+all3_ES_matrix shape: (nEncTimeWindows, nNonRecallTimeWindows, (nChannels * nTrials), nObjEnc(3))
+
+3. compute_ES_between_trial_v4.m computes the between trial encoding-maintenance similarity either within object or between object.
+
+4. Results

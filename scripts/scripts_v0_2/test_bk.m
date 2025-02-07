@@ -1,8 +1,8 @@
 %% EMS trace analysis with xcorr
 
 
-load("D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem allenc\201907\encoding_similarity.mat")
-load("D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem allenc\201907\PSVs.mat", 'label_table')
+load("D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem allenc correct\201907\encoding_similarity.mat")
+load("D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem allenc correct\201907\PSVs.mat", 'label_table')
 % load("D:\Power Spectrum Similarity\Z_Raw Data Storage\D_OWM_t_bipolar_201907.mat")
 load("D:\Power Spectrum Similarity\Z_Raw Data Storage\OWM_trialinfo_201907.mat", 'C')
 rows_without_nan_by_enc = ~squeeze(any(any(isnan(all3_ES_matrix), 2), 3));
@@ -55,7 +55,7 @@ end
 
 %% trial by trial
 
-chan=10;
+chan=1;
 targID=1;
 correctness=1;
 encodingperiod=3;
@@ -67,9 +67,9 @@ data=all3_ES_matrix(label_table.channel_ID==chan & label_table.encID_to_imageID(
 
 figure;
 sgtitle(C{1,targID});
-for i=1:10 %size(targtabletr,1)
+for i=11:20 %size(targtabletr,1)
 
-    subplot(10,1,i)
+    subplot(10,1,i-10)
 
 
 

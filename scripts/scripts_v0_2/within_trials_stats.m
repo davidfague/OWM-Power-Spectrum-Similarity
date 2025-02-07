@@ -1,45 +1,32 @@
 %%PSS_post_processing
-%% constants
-hellbender = false;
-[fixation_win_IDs, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, maint_win_IDs] = get_window_IDs();
+
+%% Power Spectrum Similarity
+% cd('D:\Power Spectrum Similarity')% cd('D:\Power Spectrum Similarity')%cd('C:\Users\david\Downloads\Power Spectrum Similarity')
+addpath('../Z_Raw Data Storage')          
+addpath('../subfunctions')
+
+
+%% Specify large data subset to process - empty means all - regions, gamma/non-gamma channels, trials, performance, items
+patient_IDs = [201907];%[201907 201908, 201903, 201905, 201906, 201901, 201910, 201915];
 use_gamma_mod_chans = [true];%, false]; % [true, false] means all channels
 brain_anatomies_to_process = {};
 % target_encodingIDs = 1;
 % target_correctness = 1;
 % images_to_process = {}; %P046;
-%% Power Spectrum Similarity
-% cd('D:\Power Spectrum Similarity')% cd('D:\Power Spectrum Similarity')%cd('C:\Users\david\Downloads\Power Spectrum Similarity')
-if hellbender
-    addpath 'Raw Data Storage'               %#ok<UNRCH>
-    addpath 'subfunctions'
-else
-    addpath('../Z_Raw Data Storage')      %#ok<UNRCH>    
-    addpath('../subfunctions')
-end
-
-
-%% Specify large data subset to process - empty means all - regions, gamma/non-gamma channels, trials, performance, items
-if hellbender
-    patient_IDs = [201907 201908, 201903, 201905, 201906, 201901, 201910, 201915]; %#ok<UNRCH>
-else
-    patient_IDs = [201907]; %#ok<NBRAK2>
-end
 
 % output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/allpatients gammamod allregions allitem allenc');
-% output_folder = 'D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem enc1 correct';
-if hellbender
-    output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/allpatients gammamod allregions allitem allenc'); %#ok<UNRCH>
-else 
-    % output_folder = 'D:\Power Spectrum Similarity\parallel
-    % output\allpatients gammamod allregions allitem enc1 correct'; 
-    output_folder = 'D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem enc1 correct'; %#ok<UNRCH>
-end
+output_folder = 'D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem enc1 correct';
+
+% note remove pwd after moving data from pwd back to the correct folder.
 
 %'parallel output\allpatients gammamod allregions allitem enc1 correct');
 %'D:\Power Spectrum Similarity\parallel output\allpatients gammamod allregions allitem enc1 correct';
-% if ~exist(output_folder, 'dir')
-%     mkdir(output_folder)
-% end
+if ~exist(output_folder, 'dir')
+    mkdir(output_folder)
+end
+
+%% constants
+[fixation_win_IDs, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, maint_win_IDs] = get_window_IDs();
 
 %% intialize parallel pool
 % if isempty(gcp('nocreate'))
@@ -53,13 +40,11 @@ for idx = 1:length(patient_IDs)
     PS_file = matfile(strcat(fullfile(output_folder, num2str(patient_ID)), '.mat'));
 
 
-    combined_save_file = fullfile(strrep(PS_file.Properties.Source, '.mat', 'all3_ES.mat'));
+    combined_save_file = fullfile(strrep(PS_file.Properties.Source, '.mat', '/all3 ES/all3Enc_ES.mat'));
     % 
     ES_file = matfile(combined_save_file);
-
-    [EMS_means, EFS_means] = compute_mean_EMS_EFS(ES_file);
     % [EMS, EFS, ~] = compute_EMS_EFS_EES(ES_file, PS_file);
-    
+
     label_table = PS_file.label_table;
     rows_with_nan = any(isnan(label_table.EMS_means), 2);
     label_table = label_table(~rows_with_nan,:);

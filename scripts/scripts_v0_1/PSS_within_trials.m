@@ -1,70 +1,58 @@
 %%PSS_post_processing
-%% constants
-hellbender = false;
-[fixation_win_IDs, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, maint_win_IDs] = get_window_IDs();
+
+%% Power Spectrum Similarity
+cd('D:\Power Spectrum Similarity')% cd('D:\Power Spectrum Similarity')%cd('C:\Users\david\Downloads\Power Spectrum Similarity')
+addpath 'Raw Data Storage'               
+addpath 'subfunctions'
+
+
+%% Specify large data subset to process - empty means all - regions, gamma/non-gamma channels, trials, performance, items
+patient_IDs = [201907];%[201907 201908, 201903, 201905, 201906, 201901, 201910, 201915];
 use_gamma_mod_chans = [true];%, false]; % [true, false] means all channels
 brain_anatomies_to_process = {};
 % target_encodingIDs = 1;
 % target_correctness = 1;
 % images_to_process = {}; %P046;
-%% Power Spectrum Similarity
-% cd('D:\Power Spectrum Similarity')% cd('D:\Power Spectrum Similarity')%cd('C:\Users\david\Downloads\Power Spectrum Similarity')
-if hellbender
-    addpath 'Raw Data Storage'               %#ok<UNRCH>
-    addpath 'subfunctions'
-else
-    addpath('../Z_Raw Data Storage')      %#ok<UNRCH>    
-    addpath('../subfunctions')
-end
-
-
-%% Specify large data subset to process - empty means all - regions, gamma/non-gamma channels, trials, performance, items
-if hellbender
-    patient_IDs = [201907 201908, 201903, 201905, 201906, 201901, 201910, 201915]; %#ok<UNRCH>
-else
-    patient_IDs = [201907]; %#ok<NBRAK2>
-end
 
 % output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/allpatients gammamod allregions allitem allenc');
-% output_folder = 'D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem enc1 correct';
-if hellbender
-    output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/allpatients gammamod allregions allitem allenc'); %#ok<UNRCH>
-else 
-    % output_folder = 'D:\Power Spectrum Similarity\parallel
-    % output\allpatients gammamod allregions allitem enc1 correct'; 
-    output_folder = 'D:\Power Spectrum Similarity\AA_Processed Data\allpatients gammamod allregions allitem enc1 correct'; %#ok<UNRCH>
-end
+output_folder = 'D:\Power Spectrum Similarity\parallel output\allpatients gammamod allregions allitem enc1 correct';
+
+% note remove pwd after moving data from pwd back to the correct folder.
 
 %'parallel output\allpatients gammamod allregions allitem enc1 correct');
 %'D:\Power Spectrum Similarity\parallel output\allpatients gammamod allregions allitem enc1 correct';
-% if ~exist(output_folder, 'dir')
-%     mkdir(output_folder)
-% end
+if ~exist(output_folder, 'dir')
+    mkdir(output_folder)
+end
+
+%% constants
+[fixation_win_IDs, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, maint_win_IDs] = get_window_IDs();
 
 %% intialize parallel pool
 % if isempty(gcp('nocreate'))
 %     parpool('local', 64);%25); % Open a local parallel pool if none exists
 % end
-
-%% loop through patients - compute within_trial similarities
 combined_table = table();
+%% loop through patients
 for idx = 1:length(patient_IDs)
     patient_ID = patient_IDs(idx);
     PS_file = matfile(strcat(fullfile(output_folder, num2str(patient_ID)), '.mat'));
 
-
-    combined_save_file = fullfile(strrep(PS_file.Properties.Source, '.mat', 'all3_ES.mat'));
+    % % % compute correlations
+    compute_all_within_trial_similarities(PS_file)
+    % 
+    % % gather into 1 file per patient since calculated separately first go
+    % % around.
+    combined_save_file = combine_enc_matrices(PS_file);
+    % combined_save_file = fullfile(strrep(PS_file.Properties.Source, '.mat', 'all3Enc_ES.mat'));
     % 
     ES_file = matfile(combined_save_file);
+    [EMS, EFS, ~] = compute_EMS_EFS_EES(ES_file, PS_file);
 
-    [EMS_means, EFS_means] = compute_mean_EMS_EFS(ES_file);
-    % [EMS, EFS, ~] = compute_EMS_EFS_EES(ES_file, PS_file);
-    
     label_table = PS_file.label_table;
     rows_with_nan = any(isnan(label_table.EMS_means), 2);
     label_table = label_table(~rows_with_nan,:);
-    % label_table = subset_table_by_enc_performance(label_table); % selects
-    % only all 3 correct
+    label_table = subset_table_by_enc_performance(label_table);
     EMS_mean_byenc = mean(label_table.EMS_means(:,:),1);
     EFS_mean_byenc = mean(label_table.EFS_means(:,:),1);
 
@@ -102,28 +90,13 @@ for idx = 1:length(patient_IDs)
     EMS_EFS_mean_byenc_per_label.Average_EFS = mean(EMS_EFS_mean_byenc_per_label.mean_EFS_means, 2);
     EMS_EFS_mean_byenc_per_label.diff = EMS_EFS_mean_byenc_per_label.mean_EMS_means - EMS_EFS_mean_byenc_per_label.mean_EFS_means;
     EMS_EFS_mean_byenc_per_label.avg_diff = mean(EMS_EFS_mean_byenc_per_label.diff, 2);
-%% testing
-    [EMS_EFS_mean_byenc_per_label] =  compute_stats_table(label_table);
-%% testing
-    % % Group by 'anatomical_label' and 'encoding_correctness'
-    % EMS_EFS_mean_byenc_per_label = groupsummary(label_table, {'anatomical_label', 'encoding_correctness'}, 'mean', {'EMS_means', 'EFS_means'});
-    % % Calculate average EMS and EFS across encoding correctness for each label
-    % EMS_EFS_mean_byenc_per_label.Average_EMS = mean(EMS_EFS_mean_byenc_per_label.mean_EMS_means, 2);
-    % EMS_EFS_mean_byenc_per_label.Average_EFS = mean(EMS_EFS_mean_byenc_per_label.mean_EFS_means, 2);
-    % % Calculate the difference between EMS and EFS means
-    % EMS_EFS_mean_byenc_per_label.diff = EMS_EFS_mean_byenc_per_label.mean_EMS_means - EMS_EFS_mean_byenc_per_label.mean_EFS_means;
-    % % Calculate the average difference across encoding correctness for each label
-    % EMS_EFS_mean_byenc_per_label.avg_diff = mean(EMS_EFS_mean_byenc_per_label.diff, 2);
 
-    %% sort and combine tables
+
+    
     % Sort the table by the mean of EMS_means in descending order
     % sorted_table = sortrows(EMS_EFS_mean_byenc_per_label, 'Average_EMS', 'descend');
     sorted_table = sortrows(EMS_EFS_mean_byenc_per_label, 'avg_diff', 'descend');
-    % save("by_performance.mat", 'sorted_table')
-    % sorted_table = sortrows(EMS_EFS_mean_byenc_per_label, 'anatomical_label', 'descend');
-    [difference_table] = compute_diff_btwn_corr_incorr(sorted_table);
-    difference_table = sortrows(difference_table, 'avg_diff_Difference', 'descend');
-    % save("performance_summary.mat", 'difference_table')
+
         % Concatenate the current patient's table with the combined table
     combined_table = [combined_table; EMS_EFS_mean_byenc_per_label];
 
@@ -213,61 +186,125 @@ function similarity_subset = get_enc_similarity(PS_file, select_window_ids)
     end
 end
 
-function [EMS_EFS_mean_byenc_per_label] =  compute_stats_table(label_table)
-% Step 1: Add a new column to represent the correct and incorrect trial groups
-label_table = compute_correctness_group(label_table);
 
-% Remove rows classified as "Other" if you only want to keep correct/incorrect trials
-label_table = label_table(~strcmp(label_table.correctness_group, "Other"), :);
 
-% Step 2: Use groupsummary to group by anatomical label and correctness group
-EMS_EFS_mean_byenc_per_label = groupsummary(label_table, {'anatomical_label', 'correctness_group'}, 'mean', {'EMS_means', 'EFS_means'});
+function [] = compute_all_within_trial_similarities(data_file)
 
-% Step 3: Calculate additional metrics for each group
-EMS_EFS_mean_byenc_per_label.Average_EMS = mean(EMS_EFS_mean_byenc_per_label.mean_EMS_means, 2);
-EMS_EFS_mean_byenc_per_label.Average_EFS = mean(EMS_EFS_mean_byenc_per_label.mean_EFS_means, 2);
-EMS_EFS_mean_byenc_per_label.diff = EMS_EFS_mean_byenc_per_label.mean_EMS_means - EMS_EFS_mean_byenc_per_label.mean_EFS_means;
-EMS_EFS_mean_byenc_per_label.avg_diff = mean(EMS_EFS_mean_byenc_per_label.diff, 2);
 
-% Display the results
-disp('EMS and EFS Means by Anatomy and Correctness Group:');
-disp(EMS_EFS_mean_byenc_per_label);
+    [~, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, ~, non_selection_win_IDs, ~] = get_window_IDs(); % won't change each function call
+    
+    % data_file.all_windowed_mean_PS_vectors: size = all_window_IDs, frequencies, channels x trials 
+    % label_table = data_file.label_table;
+
+    % whole_trial_ES_matrix = compute_similarity_matrix(mean_PS_vectors, enc1_win_IDs, all_win_IDs);
+    fprintf('\n')
+
+    length_table = data_file.label_table;
+    length_table = length(length_table.patient_ID);
+    mean_PS_vectors = data_file.all_windowed_mean_PS_vectors(non_selection_win_IDs,:,:);
+    encID_order = [1,3,2];
+    all3_ES_matrix = zeros(length_table, length(enc1_win_IDs), length(non_selection_win_IDs), 3);
+    save_file = fullfile(strrep(data_file.Properties.Source, '.mat', sprintf('all3_ES.mat')));
+    for encID_idx = 1:3
+        encID = encID_order(encID_idx);  % This will access enc1, enc3, enc2
+        % save_file = fullfile(strrep(data_file.Properties.Source, '.mat', sprintf('_ES%d.mat', encID)));
+        if exist(save_file, 'file')
+            fprintf('%s already exists. Skipping computation.\n', save_file);
+            return;
+        else
+            fprintf('computing %s\n', save_file);
+        end
+
+        % Determine the appropriate window IDs based on encID
+        % Assign the correct window IDs based on encID
+        switch encID
+            case 1
+                enc_win_IDs = enc1_win_IDs;
+            case 2
+                enc_win_IDs = enc2_win_IDs;
+            case 3
+                enc_win_IDs = enc3_win_IDs;
+        end
+
+        % temp_matrix = zeros(length_table, length(enc_win_IDs), length(non_selection_win_IDs), 3);
+        
+        % Compute similarity for all patients for this encoding ID
+        parfor j = 1:length_table
+            all3_ES_matrix(j, :, :, encID) = compute_similarity_matrix(mean_PS_vectors(:,:,j), enc_win_IDs, non_selection_win_IDs);
+        end
+
+        % save(save_file, 'temp_matrix', '-v7.3')
+
+    % If the matrix already exists, skip execution
+
+    % if isprop(save_file, 'all_all3Enc_wholeTrial_ES_matrix')
+    %     disp('all_all3Enc_wholeTrial_ES_matrix already exists. Skipping computation.');
+    %     return;
+    % else
+    %     fprintf('computing %s all_all3Enc_wholeTrial_ES_matrix', string(data_file));
+    % end
+            %all_all3Enc_wholeTrial_ES_matrix = zeros(length(label_table.patient_ID) ,size(whole_trial_ES_matrix, 1),size(whole_trial_ES_matrix, 2), 3);
+        %        parfor i=1:length(label_table.patient_ID) % every channel-trial combination    
+        %     % Temporary variable to hold the similarity matrices for this iteration
+        %     all3Enc_wholeTrial_ES_matrix = zeros(size(whole_trial_ES_matrix, 1), size(whole_trial_ES_matrix, 2), 3);
+        %     % Compute similarity matrices for each encoding period
+        %     all3Enc_wholeTrial_ES_matrix(:, :, 1) = compute_similarity_matrix(mean_PS_vectors, enc1_win_IDs, all_win_IDs);
+        %     all3Enc_wholeTrial_ES_matrix(:, :, 2) = compute_similarity_matrix(mean_PS_vectors, enc2_win_IDs, all_win_IDs);
+        %     all3Enc_wholeTrial_ES_matrix(:, :, 3) = compute_similarity_matrix(mean_PS_vectors, enc3_win_IDs, all_win_IDs);
+        % 
+        %     % all3Enc_EMS_matrix = all3Enc_wholeTrial_ES_matrix(:,maint_win_IDs,:);
+        %     % all3Enc_EFS_matrix = all3Enc_wholeTrial_ES_matrix(:,fixation_win_IDs,:);
+        % 
+        %     % all3Enc_EES_matrix = all3Enc_wholeTrial_ES_matrix(:,fixation_win_IDs,:);
+        % 
+        %     % Assign the temporary result to the main matrix
+        %     all_all3Enc_wholeTrial_ES_matrix(i, :, :, :) = all3Enc_wholeTrial_ES_matrix;
+        % end
+    end
+
+    save(save_file, 'all3_ES_matrix', '-v7.3')
+
 end
 
-function [difference_table] = compute_diff_btwn_corr_incorr(sorted_table)
+function [combined_save_file] = combine_enc_matrices(data_file)
 
-% Initialize a new table to store the results
-unique_labels = unique(sorted_table.anatomical_label);
-n_labels = numel(unique_labels);
-
-% Preallocate the new table
-difference_table = table('Size', [n_labels, 4], ...
-                         'VariableTypes', {'string', 'double', 'double', 'double'}, ...
-                         'VariableNames', {'anatomical_label', 'avg_diff_Correct', 'avg_diff_Incorrect', 'avg_diff_Difference'});
-
-% Loop through each unique anatomical label
-for i = 1:n_labels
-    % Get the current label
-    current_label = unique_labels{i};
+    % Precompute window IDs (won't change for each function call)
+    % [fixation_win_IDs, enc1_win_IDs, enc2_win_IDs, enc3_win_IDs, maint_win_IDs, non_selection_win_IDs, all_win_IDs] = get_window_IDs();
     
-    % Find the rows corresponding to this label and each correctness group
-    correct_row = strcmp(sorted_table.anatomical_label, current_label) & strcmp(sorted_table.correctness_group, "Correct_Trial");
-    incorrect_row = strcmp(sorted_table.anatomical_label, current_label) & strcmp(sorted_table.correctness_group, "Incorrect_Trial");
+    % Output save file for the combined matrix
+    combined_save_file = fullfile(strrep(data_file.Properties.Source, '.mat', 'all3Enc_ES.mat'));
     
-    % Extract the avg_diff for correct and incorrect trials
-    avg_diff_correct = sorted_table.avg_diff(correct_row);
-    avg_diff_incorrect = sorted_table.avg_diff(incorrect_row);
+    if exist(combined_save_file, 'file')
+        fprintf('%s already exists. Skipping computation.\n', combined_save_file);
+        return;
+    end
     
-    % Store the values in the new table
-    difference_table.anatomical_label(i) = current_label;
-    difference_table.avg_diff_Correct(i) = avg_diff_correct;
-    difference_table.avg_diff_Incorrect(i) = avg_diff_incorrect;
-    difference_table.avg_diff_Difference(i) = avg_diff_correct - avg_diff_incorrect;
-end
-
-% Calculate the percent change from correct
-difference_table.Percent_Change_From_Correct = (difference_table.avg_diff_Difference ./ difference_table.avg_diff_Correct) * 100;
-
-% Display the resulting table
-disp(difference_table);
+    % Prepare a matrix to hold the combined similarities for each encoding period
+    all3_ES_matrix = [];
+    
+    for encID = 1:3
+        save_file = fullfile(strrep(data_file.Properties.Source, '.mat', sprintf('_ES%d.mat', encID)));
+        
+        if exist(save_file, 'file')
+            fprintf('Loading %s\n', save_file);
+            load(save_file, 'temp_matrix');
+        else
+            fprintf('ES%d file not found. Skipping this encoding.\n', encID);
+            continue;
+        end
+        
+        % Add a new dimension for each encoding matrix
+        if isempty(all3_ES_matrix)
+            % Initialize the combined matrix with the first encoding
+            all3_ES_matrix = zeros(size(temp_matrix, 1), size(temp_matrix, 2), size(temp_matrix, 3), 3);
+        end
+        
+        % Store the temp_matrix in the appropriate encoding ID slice
+        all3_ES_matrix(:,:,:,encID) = temp_matrix;
+    end
+    
+    % Save the combined matrix into a new file
+    fprintf('Saving combined encoding matrices to %s\n', combined_save_file);
+    save(combined_save_file, 'all3_ES_matrix', '-v7.3');
+    
 end
