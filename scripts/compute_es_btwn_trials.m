@@ -8,11 +8,14 @@
 %% v2: remove the without_nan subsetting of label_table and PSVs to keep indexing inconsistent; also begin saving only unique results
 % also only save the unique trial pairs, do not oversample.
 
+clear all
+close all
+
 %% parameters
 
 custom_params = struct();
 custom_params.k12wm = false;
-custom_params.patient_IDs = [201901];
+custom_params.patient_IDs = [201903];
 custom_params.output_folder_name = 'middle_fixation_baseline';
 
 % custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
@@ -40,14 +43,16 @@ for idx = 1:length(params.patient_IDs)
         load(PS_file)
     
         % % % compute correlations
-        for within_item = [false, true]
-            params.within_item = within_item;
-            for btwn_trial_type = {'EMS'}%EES
-                params.btwn_trial_type = btwn_trial_type{1};
-                for target_enc_id = target_enc_ids%:3 % can be 1:3W
-                    for target_image_id = target_image_ids%[1,3] % can be 1:9
+        for btwn_trial_type = {'EMS'}%EES
+            params.btwn_trial_type = btwn_trial_type{1};
+            for target_enc_id = target_enc_ids%:3 % can be 1:3W % stim locations, stim 1 vs stim 2 versus stim 3
+                for target_image_id = target_image_ids%[1,3] % can be 1:9
+                    for within_item = [true, false] % false is between items
+                        params.within_item = within_item;
+
                         fprintf("computing patient%d, enc%d, image%d \n", patient_ID, target_enc_id, target_image_id)
-                        [all_channels_save_file] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
+
+                        [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
                     end
                 end
             end
@@ -59,7 +64,7 @@ for idx = 1:length(params.patient_IDs)
 end
 %% main computations
 
-function [all_channels_save_file] = compute_all_between_trial_similarities(patient_ID, target_enc_ids, target_image_ids, params, label_table, all_window_mean_PS_vectors)
+function [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_ids, target_image_ids, params, label_table, all_window_mean_PS_vectors)
 % would need reworking to accept all 3 encodings at once. Have to select
 % enc_win_IDs based on the encID where the thing is found.
 
@@ -81,7 +86,15 @@ function [all_channels_save_file] = compute_all_between_trial_similarities(patie
     item_cor_table = label_table(test_rows, :);
     item_cor_PSVs = all_window_mean_PS_vectors(:, :, test_rows);
 
+    % get rid of bad test rows
+    item_cor_bad_rows = any(isnan(item_cor_PSVs),[1 2]) | all(item_cor_PSVs== 0, [1 2]);
+    if sum(item_cor_bad_rows) > 0
+        warning("   %d bad rows found in item_cor_PSVs (nans or all zeros)", sum(item_cor_bad_rows))
+        [item_cor_table, item_cor_PSVs] = filter_table_PSVs(item_cor_table, item_cor_PSVs, ~item_cor_bad_rows); % get rid of bad rows
+    end
+
     % Get control data (all 3 encoding correct without the target image)
+    % maintenance periods
     if params.within_item
         control_rows = test_rows;
     else
@@ -89,6 +102,13 @@ function [all_channels_save_file] = compute_all_between_trial_similarities(patie
     end
     control_table = label_table(control_rows, :);
     control_PSVs = all_window_mean_PS_vectors(:, :, control_rows);
+
+    % get rid of bad control rows
+    control_bad_rows = any(isnan(control_PSVs),[1 2]) | all(control_PSVs== 0, [1 2]);
+    if sum(control_bad_rows) > 0
+        warning("   %d bad rows found in control_bad_rows (nans or all zeros)", sum(control_bad_rows))
+        [control_table, control_PSVs] = filter_table_PSVs(control_table, control_PSVs, ~control_bad_rows); % get rid of bad rows
+    end
     clearvars all_window_mean_PS_vectors label_table
 
     % Identify unique channels
@@ -112,21 +132,41 @@ function [all_channels_save_file] = compute_all_between_trial_similarities(patie
     save(all_channels_save_file, "target_image_ids", "target_enc_ids", "test_rows", "control_rows", "unique_channel_IDs")
 
     %% Loop through each unique channel
+    if ~params.within_item
+        if isempty(params.processed_channels)
+            warning('No WI channels were procesed. Skipping BI')
+            return
+            % error("process WI before BI.")
+        end
+        unique_channel_IDs = params.processed_channels; % for BI use the same channels that worked for WI
+    else
+        params.processed_channels=[]; % start counting for within_item
+    end
+
     for chan_idx = 1:length(unique_channel_IDs)
         chan_id = unique_channel_IDs(chan_idx);
         save_file = fullfile(save_folder, sprintf('BT_%d.mat', chan_id));
 
         % Filter data for the current channel ID
         chan_test_rows = filter_by_channel_id(item_cor_table, chan_id);
-        [chan_test_table, ~] = filter_table_PSVs(item_cor_table, item_cor_PSVs, chan_test_rows);
-        [~, chan_test_PSVs] = filter_table_PSVs(item_cor_table, item_cor_PSVs, chan_test_rows);
+        [chan_test_table, chan_test_PSVs] = filter_table_PSVs(item_cor_table, item_cor_PSVs, chan_test_rows);
 
         chan_ctrl_rows = filter_by_channel_id(control_table, chan_id);
-        [chan_ctrl_table, ~] = filter_table_PSVs(control_table, control_PSVs, chan_ctrl_rows);
-        [~, chan_ctrl_PSVs] = filter_table_PSVs(control_table, control_PSVs, chan_ctrl_rows);
+        [chan_ctrl_table, chan_ctrl_PSVs] = filter_table_PSVs(control_table, control_PSVs, chan_ctrl_rows);
 
         num_test_trials = size(chan_test_PSVs, 3);
         num_ctrl_trials = size(chan_ctrl_PSVs, 3);
+
+        if num_test_trials * num_ctrl_trials < 25
+            % skipping because not enough combinations
+            warning("skipping channel %d because not enough trial pairs: %d < 25",chan_id, num_test_trials * num_ctrl_trials)
+            continue
+        else
+            fprintf("Computing similarity for %d test trials x %d control trials for chan %d\n", num_test_trials, num_ctrl_trials, chan_id);
+            if params.within_item
+                params.processed_channels = [params.processed_channels, chan_id]; % keep track of channels that meet this criterion for WI so that we can only process the same for BI
+            end
+        end
 
         %% Generate all possible pairs between test and control trials
         clear windows2
@@ -143,7 +183,6 @@ function [all_channels_save_file] = compute_all_between_trial_similarities(patie
         BT_ES = nan(length(windows1), length(windows2), num_ctrl_trials, num_test_trials); % Initialize results array
 
         % Compute similarity matrices for each test-control trial pair
-        fprintf("Computing similarity for %d test trials x %d control trials for chan %d\n", num_test_trials, num_ctrl_trials, chan_id);
         for test_trial_idx = 1:num_test_trials
             for ctrl_trial_idx = 1:num_ctrl_trials
                 if any(any(isnan(chan_test_PSVs(:, :, test_trial_idx)))) || ...
@@ -151,6 +190,7 @@ function [all_channels_save_file] = compute_all_between_trial_similarities(patie
                    all(all(chan_ctrl_PSVs(:, :, ctrl_trial_idx) == 0)) || ...
                    all(all(chan_test_PSVs(:, :, test_trial_idx) == 0))
                     % Skip invalid data
+                    error("skipping because nans or all zeros") % shouldn't get here anymore since above checks. so I replaced with error instead of warning.
                     BT_ES(:, :, ctrl_trial_idx, test_trial_idx) = nan(size(BT_ES, [1, 2]));
                 else
                     % Compute and store the result for the pair
@@ -175,13 +215,16 @@ function rows = filter_rows(label_table, target_image_ids, target_enc_ids)
     % - target_enc_ids: a vector of encoding IDs to check (e.g., 1:3, [1, 3], etc.)
 
     % Create a logical mask for encoding correctness for the selected target_enc_ids
-    enc_correct_mask = ismember(label_table.encoding_correctness(:, target_enc_ids), 1);
+    enc_correct_mask = ismember(label_table.encoding_correctness(:, target_enc_ids), 1); %' ismember' in case there are multiple target_enc_ids
     
     % Create a logical mask for matching image IDs in the selected target_enc_ids
-    image_id_mask = ismember(label_table.encID_to_imageID(:, target_enc_ids), target_image_ids);
+    image_id_mask = ismember(label_table.encID_to_imageID(:, target_enc_ids), target_image_ids); % 'ismember' in case there are multiple target_enc_ids
+
+    % include all 3 correct trials only
+    all_correct_mask = all(label_table.encoding_correctness == 1, 2);
 
     % Combine both masks using logical AND across the selected target_enc_ids
-    rows = any(enc_correct_mask & image_id_mask, 2);
+    rows = any(enc_correct_mask & image_id_mask & all_correct_mask, 2); % 'any, 2' in case there are multiple target_enc_ids
 end
 
 function rows = filter_all_correct_without_target_image(label_table, target_image_id)
