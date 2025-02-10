@@ -24,7 +24,7 @@ function [EMS_WI,EMS_BI] = get_and_pre_process_WI_BI(patient_id, comp_options, e
     
         % Process EMS data
         EMS_WI = WI.BT_ES(:, :, logicalIdx2); % omits diagonal (same-trial pairs)
-        EMS_BI = BI.BT_ES(:, :, :);
+        EMS_BI = BI.BT_ES(:, :, :); % flatten (enc, maint) to (trial_pairs)
         EMS_WI = EMS_WI(:, :, any(~isnan(EMS_WI), [1 2])); % Remove NaNs from WI
         EMS_BI = EMS_BI(:, :, any(~isnan(EMS_BI), [1 2])); % Remove NaNs from BI
 end
