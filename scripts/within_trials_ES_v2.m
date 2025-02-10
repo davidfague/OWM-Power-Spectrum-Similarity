@@ -1,5 +1,8 @@
 
 %% v2 implement get_parameters.m
+close all
+clear all
+
 custom_params = struct();
 custom_params.k12wm = false;
 custom_params.patient_IDs = [201908, 201910];
