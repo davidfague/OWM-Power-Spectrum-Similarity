@@ -119,7 +119,7 @@ params.wavenum = 6;
 
 % baselining Zpower
 params.baseline_across_trials = true; % false does within trial
-params.baseline_T_lims = [-0.5, 0];% considering T in seconds and T=T-1 so that 0=stim onset
+params.baseline_T_lims = [-0.75, -0.25];% considering T in seconds and T=T-1 so that 0=stim onset
 
 % data subsetting on initial Zpower computation
 params.brain_anatomies_to_process = {}; % only used in first script: Zpower_and_PSVs_v4.m
