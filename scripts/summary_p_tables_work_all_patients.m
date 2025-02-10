@@ -5,13 +5,14 @@ analysis_params.min_npatient_per_region = 3;
 p_threshhold = 0.975;
 %% load data
 % load('summary_utah_patients_table.mat')
-all = load("summary_p_tables_rebase_all_patients.mat", "all_patients_p_table");
-utah = load("summary_p_tables_rebase_utah_all.mat", "all_patients_p_table");
-k12wm = load('summary_p_tables_rebase_k12wm_all.mat', "all_patients_p_table");
+all = load("../results/new results/summary_p_tables_rebase_all_patients.mat", "all_patients_p_table");
+utah = load("../results/new results/summary_p_tables_rebase_utah_all.mat", "all_patients_p_table");
+k12wm = load('../results/new results/summary_p_tables_rebase_k12wm_all.mat', "all_patients_p_table");
 
 all_patients_p_table = all.all_patients_p_table; % select table
 
-addpath("../subfunctions/")
+% addpath("../subfunctions/")
+params = get_parameters();
 
 %% remove missing
 all_patients_p_table = all_patients_p_table(~ismissing(all_patients_p_table.anat),:);
@@ -61,7 +62,7 @@ summaryTable = table(regions, totalOccurrences, totalAboveThreshold, fracAboveTh
 
 %% filter region
 
-load("regions_to_use.mat", "regions_to_use")
+load("../results/new results/regions_to_use.mat", "regions_to_use")
 summaryTable_unfiltered = summaryTable;
 
 % filter based on regions meeting criteria in the all_patient_table
