@@ -7,15 +7,20 @@
 %% v3 re-enabling bootstrap zbaseline across trials. Need to pass all non-nan channel data instead of individual trial-channel data?
 % update save name, update data passed
 %% v2: changing file inputs to use OneDrive instead of ExternalHD; use original patient path instead of copying preprocessed data files into 'Raw Data Storage'
+
 %% Setup Paths
+
 custom_params = struct();
 custom_params.k12wm = false;
-custom_params.patient_IDs = [201908];
+custom_params.patient_IDs = [201903];
+custom_params.baseline_T_lims = [-0.75, -0.25];
+custom_params.output_folder_name = 'middle_fixation_baseline';
+
 params = get_parameters(custom_params);
-% params.patient_IDs = [201902, 201905, 201907];
-addpath('../subfunctions')
-use_parallel = false;
+
+use_parallel = false; % not implemented
 %% loop through patients
+
 for idx = 1:length(params.patient_IDs)
     patient_ID = params.patient_IDs(idx);
     fprintf("Processing patient %s\n", num2str(patient_ID))
@@ -86,8 +91,8 @@ for idx = 1:length(params.patient_IDs)
         clear orig_channel_IDs use_gamma_mod_chans
         
         % by anatomical label
-        channel_brain_locations = D_OWM_t_file.labelsanatbkedit;
-        channel_brain_locations = channel_brain_locations.anatmacro1;
+        channel_brain_locations = D_OWM_t_file.labelsanatbkedit.anatmacro1;
+       
         channels_to_process = subset_channels_by_brain_location(channels_to_process, params.brain_anatomies_to_process, channel_brain_locations);
         channel_brain_locations_to_process = channel_brain_locations(channels_to_process);
     
@@ -130,7 +135,7 @@ for idx = 1:length(params.patient_IDs)
     
         all_windowed_mean_PS_vectors = nan(params.num_windows, params.num_PSV_frequencies, size(label_table,1)); % num_windows, num_frequencies, num_rows
     
-        % % Precompute row indices for faster access
+        % % Precompute row indices for faster access % trying to speed/parallelize
         % row_indices = nan(length(channels_to_process), num_trials);
         % for chan_id = 1:length(channels_to_process)
         %     for trial_id = 1:num_trials
@@ -169,7 +174,7 @@ for idx = 1:length(params.patient_IDs)
                 % precomputation
                 row_id = find(label_table.channel_ID == channels_to_process(chan_id) & label_table.trial_ID == trial_id);
                 
-                if length(row_id) > 1
+                if length(row_id) > 1 | isempty(row_id)
                     error("should be one row per chan x trial. %s pairs found", num2str(length(row_id)))
                 end
     
@@ -187,6 +192,8 @@ for idx = 1:length(params.patient_IDs)
         
                 % Store the result in the preallocated matrix
                 all_windowed_mean_PS_vectors(:, :, row_id) = windowed_mean_PS_vectors;
+
+                clear row_id trial_id 
     
             end
             clear Zpower time_data trial_Zpower
