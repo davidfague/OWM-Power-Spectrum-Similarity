@@ -15,8 +15,9 @@ close all
 
 custom_params = struct();
 custom_params.k12wm = false;
-custom_params.patient_IDs = [201903];
+custom_params.patient_IDs = [201907, 201908, 201910, 201915];
 custom_params.output_folder_name = 'middle_fixation_baseline';
+custom_params.ES_freq_band = 1:40;
 
 % custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
 params = get_parameters(custom_params);
@@ -41,6 +42,11 @@ for idx = 1:length(params.patient_IDs)
         params.session_id = session_idx;
         PS_file = get_PS_file(params, patient_ID, false);
         load(PS_file)
+
+        % filter by frequency
+        all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,params.ES_freq_band,:);
+        params.freq_min = min(params.ES_freq_band);
+        params.freq_max = max(params.ES_freq_band);
     
         % % % compute correlations
         for btwn_trial_type = {'EMS'}%EES
@@ -50,7 +56,7 @@ for idx = 1:length(params.patient_IDs)
                     for within_item = [true, false] % false is between items
                         params.within_item = within_item;
 
-                        fprintf("computing patient%d, enc%d, image%d \n", patient_ID, target_enc_id, target_image_id)
+                        fprintf("computing patient%d, enc%d, image%d %d-%dHz\n", patient_ID, target_enc_id, target_image_id, params.freq_min, params.freq_max)
 
                         [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
                     end
@@ -116,9 +122,15 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
 
     % Set up save folder
     if params.within_item % the following could use params.output_folder instead of strrep(PS.source, PS_file, new)
-        save_folder = fullfile(sprintf('%s/%d/session%d/corr BT WI/%s/enc%d_image%d', params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, target_enc_ids, target_image_ids));
+        save_folder = fullfile(sprintf('%s/%d/session%d/corr BT WI/%s/%s/enc%d_image%d', ...
+            params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, ...
+            sprintf("%d-%d",params.freq_min,params.freq_max), ...
+            target_enc_ids, target_image_ids));
     else
-        save_folder = fullfile(sprintf('%s/%d/session%d/corr BT BI/%s/enc%d_image%d', params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, target_enc_ids, target_image_ids));
+        save_folder = fullfile(sprintf('%s/%d/session%d/corr BT BI/%s/%s/enc%d_image%d', ...
+            params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, ...
+            sprintf("%d-%d",params.freq_min,params.freq_max), ...
+            target_enc_ids, target_image_ids));
     end
 
     if ~exist(save_folder, 'dir')

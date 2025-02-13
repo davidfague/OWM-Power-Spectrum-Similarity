@@ -46,6 +46,7 @@ params.num_wrkrs_local = 2;
 params.init_par_pool = false;  % enable to run parfor
 params.output_folder_name = 'allpatients gammamod allregions allitem allenc baseline across trials';
 params.processed_data_dir = '../processed_data/';
+params.ES_freq_band = 1:40;
 
 %% Override first set of defaults with any custom parameters
 
@@ -130,7 +131,8 @@ params.use_gamma_mod_chans = [true];%, false]; % [true, false] means all channel
 % images_to_process = {}; %P046
 
 % for ES
-params.ES_freq_band = 1:40;
+params.freq_min = min(params.ES_freq_band);
+params.freq_max = max(params.ES_freq_band);
 
 % between trials similarity
 params.btwn_trial_type = 'EMS'; % default
