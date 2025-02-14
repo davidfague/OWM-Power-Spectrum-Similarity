@@ -1,11 +1,12 @@
 %% 
-addpath("../subfunctions")
-addpath("../plotting functions")
-addpath("../plotting functions/main")
-addpath("../plotting functions/main nearly")
+% addpath("../subfunctions")
+% addpath("../plotting functions")
+% addpath("../plotting functions/main")
+% addpath("../plotting functions/main nearly")
 
 custom_params = struct();
-custom_params.k12wm = true;
+custom_params.k12wm = false;
+custom_params.output_folder_name = 'middle_fixation_baseline';
 params = get_parameters(custom_params);
 
 %% select data
@@ -48,23 +49,23 @@ plot_params.same_n = true; % only affects plot_similarity_means_heatmaps
 plot_params.only_all3_correct = true; % filters test trials (with item)
 
 %%
-% plot_params.recompute_table = true;
+plot_params.recompute_table = true;
 % params.patient_IDs = [010];
-% 
-% if plot_params.recompute_table
-%     original_mean_out_time = plot_params.mean_out_time_dimensions;
-%     plot_params.mean_out_time_dimensions = true;
-%     all_p_table = table();
-% 
-%     for pat_idx = 1:length(params.patient_IDs)
-%         plot_params.patient_id = params.patient_IDs(pat_idx);
-%         all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table);
-%     end
-% 
-%     save('summary_p_tables_rebase_k12wm_p10.mat', 'all_p_table')
-% end
-% plot_params.mean_out_time_dimensions = original_mean_out_time;
-% clearvars patient_ids_to_use table_all_patients original_mean_out_time
+
+if plot_params.recompute_table
+    original_mean_out_time = plot_params.mean_out_time_dimensions;
+    plot_params.mean_out_time_dimensions = true;
+    all_p_table = table();
+
+    for pat_idx = 1:length(params.patient_IDs)
+        plot_params.patient_id = params.patient_IDs(pat_idx);
+        all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table);
+    end
+
+    save('summary_p_tables_midbase_40hz_utah.mat', 'all_p_table')
+end
+plot_params.mean_out_time_dimensions = original_mean_out_time;
+clearvars patient_ids_to_use table_all_patients original_mean_out_time
 
 %% compute
 % plot_params.patient_id = 201908;
@@ -150,17 +151,7 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
                 chan_id = channel_ids_to_use(chan_idx);
                 plot_param.chan_id = chan_id;
                 fprintf("p%s session%d chan%s image%s\n", num2str(patient_id), session_idx, num2str(chan_id), num2str(image_id));
-                try
                 anat = string(anat_labels.labelsanatbkedit.anatmacro1(chan_id));
-                catch
-                disp('hold up')
-                end
-                % if iscell(anat)
-                %     anat = anat{1};
-                % end
-                % if isempty(anat)
-                %     return % not labeled anat?
-                % end
 
                 % get WI, BI matrices; size: (nEtimes, nMtimes, nTrialCombinations)
                 [WI, BI] = get_and_pre_process_WI_BI(patient_id, params.comp_options, plot_params.enc_id, ...
@@ -188,7 +179,7 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
                 % calculate real differences
                 fprintf("    calculating real differences\n")
                 if plot_params.average_diff
-                    diff = calc_diff_avg(WI, BI, 1000, plot_params.mean_out_time_dimensions);
+                    diff = calc_diff_avg(WI, BI, 1000);
                 else
                     diff = calc_diff_all_pairs(WI, BI, 10000);
                 end
