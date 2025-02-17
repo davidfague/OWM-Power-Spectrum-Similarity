@@ -11,9 +11,10 @@
 %% Setup Paths
 
 custom_params = struct();
-custom_params.k12wm = false;
-custom_params.patient_IDs = [201903];
+custom_params.k12wm = true;
+custom_params.patient_IDs = [ 005, 006, 007, 008, 009, 010];
 custom_params.baseline_T_lims = [-0.75, -0.25];
+custom_params.hellbender = true;
 custom_params.output_folder_name = 'middle_fixation_baseline';
 
 params = get_parameters(custom_params);
@@ -35,7 +36,11 @@ for idx = 1:length(params.patient_IDs)
         disp(patient_preprocessed_data_path)
 
         if params.k12wm
-            prefix = strsplit(patient_preprocessed_data_path,'\');
+            if params.hellbender
+                prefix = strsplit(patient_preprocessed_data_path,'/');
+            else
+                prefix = strsplit(patient_preprocessed_data_path,'\');
+            end
             prefix = prefix{end};
             D_OWM_t_file = load(fullfile(patient_preprocessed_data_path, sprintf("%s_1kft_notch_epoch_outliers_bip_demean.mat", prefix)));
             % reformat data

@@ -7,6 +7,7 @@
 custom_params = struct();
 custom_params.k12wm = false;
 custom_params.output_folder_name = 'middle_fixation_baseline';
+custom_params.hellbender = true;
 params = get_parameters(custom_params);
 
 %% select data
@@ -48,6 +49,8 @@ plot_params.same_n = true; % only affects plot_similarity_means_heatmaps
 
 plot_params.only_all3_correct = true; % filters test trials (with item)
 
+
+es_freq_bands = {[1:8], [8:20], [20:40]};
 %%
 plot_params.recompute_table = true;
 % params.patient_IDs = [010];
@@ -55,14 +58,28 @@ plot_params.recompute_table = true;
 if plot_params.recompute_table
     original_mean_out_time = plot_params.mean_out_time_dimensions;
     plot_params.mean_out_time_dimensions = true;
-    all_p_table = table();
+    for freqs_idx = 1:length(es_freq_bands)
+        all_p_table = table();
+        params.ES_freq_band = es_freq_bands{freqs_idx};
+        params.freq_min = min(params.ES_freq_band);
+        params.freq_max = max(params.ES_freq_band);
 
-    for pat_idx = 1:length(params.patient_IDs)
-        plot_params.patient_id = params.patient_IDs(pat_idx);
-        all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table);
+        for pat_idx = 1:length(params.patient_IDs)
+            plot_params.patient_id = params.patient_IDs(pat_idx);
+            all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table);
+        end
+
+        if params.k12wm
+            suffix = 'k12wm';
+        else
+            suffix = 'utah';
+        end
+
+        save_file = sprintf('summary_p_tables_midbase_%d-%dhz_%s.mat', params.freq_min, params.freq_max, suffix);
+        fprintf("saving %s", save_file)
+
+        save(save_file, 'all_p_table')
     end
-
-    save('summary_p_tables_midbase_40hz_utah.mat', 'all_p_table')
 end
 plot_params.mean_out_time_dimensions = original_mean_out_time;
 clearvars patient_ids_to_use table_all_patients original_mean_out_time

@@ -1,6 +1,6 @@
 % if temporally generalized use this witohut parfor
 function [t_values, p_values] = calc_ttest(diff)
-    tic;
+    % tic;
     dim1 = size(diff,1);
     dim2 = size(diff,2);
     t_values = zeros(dim1, dim2);
@@ -34,7 +34,7 @@ function [t_values, p_values] = calc_ttest(diff)
                 p_values(i, j) = p;
             end
         end
-        fprintf("finished for-loop t-test in %s\n", num2str(toc))
+        % fprintf("finished for-loop t-test in %s\n", num2str(toc))
     end
 end
 

@@ -12,60 +12,67 @@ clear all
 close all
 
 %% parameters
+es_freq_bands = {[8:20], [20:40]};
 
 custom_params = struct();
-custom_params.k12wm = false;
-custom_params.patient_IDs = [201907, 201908, 201910, 201915];
-custom_params.output_folder_name = 'middle_fixation_baseline';
-custom_params.ES_freq_band = 1:40;
-
-% custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
-params = get_parameters(custom_params);
-    % temp params
-% params.within_item = false; % computes control as either within item or between items
-% params.btwn_trial_type = 'EMS'; % default should be 'EMS'
-
-target_enc_ids = 1; 
-target_image_ids = 1:9;
-
-%% main loop
-
-for idx = 1:length(params.patient_IDs)
-    patient_ID = params.patient_IDs(idx);
-    if params.k12wm
-        session_ids = get_available_session_ids(params, patient_ID);
-    else
-        session_ids = 1;
-    end
-
-    for session_idx = 1:length(session_ids)
-        params.session_id = session_idx;
-        PS_file = get_PS_file(params, patient_ID, false);
-        load(PS_file)
-
-        % filter by frequency
-        all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,params.ES_freq_band,:);
-        params.freq_min = min(params.ES_freq_band);
-        params.freq_max = max(params.ES_freq_band);
-    
-        % % % compute correlations
-        for btwn_trial_type = {'EMS'}%EES
-            params.btwn_trial_type = btwn_trial_type{1};
-            for target_enc_id = target_enc_ids%:3 % can be 1:3W % stim locations, stim 1 vs stim 2 versus stim 3
-                for target_image_id = target_image_ids%[1,3] % can be 1:9
-                    for within_item = [true, false] % false is between items
-                        params.within_item = within_item;
-
-                        fprintf("computing patient%d, enc%d, image%d %d-%dHz\n", patient_ID, target_enc_id, target_image_id, params.freq_min, params.freq_max)
-
-                        [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
+for k12wm = [true, false]
+    custom_params.k12wm = k12wm;
+    for i = 1:length(es_freq_bands)
+        custom_params.ES_freq_band = es_freq_bands{i}
+        custom_params.hellbender = true;
+        % custom_params.patient_IDs = [201907, 201908, 201910, 201915];
+        custom_params.output_folder_name = 'middle_fixation_baseline';
+        % custom_params.ES_freq_band = 1:8;
+        
+        % custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
+        params = get_parameters(custom_params);
+            % temp params
+        % params.within_item = false; % computes control as either within item or between items
+        % params.btwn_trial_type = 'EMS'; % default should be 'EMS'
+        
+        target_enc_ids = 1; 
+        target_image_ids = 1:9;
+        
+        %% main loop
+        
+        for idx = 1:length(params.patient_IDs)
+            patient_ID = params.patient_IDs(idx);
+            if params.k12wm
+                session_ids = get_available_session_ids(params, patient_ID);
+            else
+                session_ids = 1;
+            end
+        
+            for session_idx = 1:length(session_ids)
+                params.session_id = session_idx;
+                PS_file = get_PS_file(params, patient_ID, false);
+                load(PS_file)
+        
+                % filter by frequency
+                all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,params.ES_freq_band,:);
+                params.freq_min = min(params.ES_freq_band);
+                params.freq_max = max(params.ES_freq_band);
+            
+                % % % compute correlations
+                for btwn_trial_type = {'EMS'}%EES
+                    params.btwn_trial_type = btwn_trial_type{1};
+                    for target_enc_id = target_enc_ids%:3 % can be 1:3W % stim locations, stim 1 vs stim 2 versus stim 3
+                        for target_image_id = target_image_ids%[1,3] % can be 1:9
+                            for within_item = [true, false] % false is between items
+                                params.within_item = within_item;
+        
+                                fprintf("computing patient%d, enc%d, image%d %d-%dHz\n", patient_ID, target_enc_id, target_image_id, params.freq_min, params.freq_max)
+        
+                                [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
+                            end
+                        end
                     end
                 end
+            
+                write_current_script_to_destination(fullfile(params.output_folder, num2str(patient_ID)), strcat(mfilename('fullpath'), '.m'));
+            
             end
         end
-    
-        write_current_script_to_destination(fullfile(params.output_folder, num2str(patient_ID)), strcat(mfilename('fullpath'), '.m'));
-    
     end
 end
 %% main computations

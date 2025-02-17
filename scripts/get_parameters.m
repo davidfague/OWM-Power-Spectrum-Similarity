@@ -8,11 +8,11 @@ function params = get_parameters(custom_params, save_script, save_values)
 
 % check local directory below too
 working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
-
+working_dir = "/mnt/pixstor/data/drfrbc/OWM-Power-Spectrum-Similarity/";
 %% addpath all utils
 
 % addpath(fullfile(strcat(working_dir,'\subfunctions')))
-utils_dir = fullfile(strcat(working_dir,'\utils'));
+utils_dir = fullfile(strcat(working_dir,'utils'));
 addSubDirs(utils_dir)
 
 function addSubDirs(dirName)
@@ -72,7 +72,7 @@ end
 
 if params.hellbender
     params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
-    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/', params.output_folder_name);
+    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name);
     params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/');
     params.local_directory = fullfile('/home/drfrbc/Power Spectrum Similarity/');
 else
@@ -85,9 +85,14 @@ end
 if params.k12wm
     params.time = 1:7001;
     params.patient_IDs = [004, 005, 006, 007, 008, 009, 010];
-    params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');
-    params.preprocessed_data_location = fullfile('../../../..//k12wm/');
-    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
+    if params.hellbender
+        params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name, '/k12wm/');
+        params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/k12wm/');
+    else
+        params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');
+        params.preprocessed_data_location = fullfile('../../../..//k12wm/');
+        params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
+    end
 else
     params.time = 1:9001;
 end

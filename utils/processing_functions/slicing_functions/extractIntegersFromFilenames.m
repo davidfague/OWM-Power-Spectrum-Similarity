@@ -1,6 +1,10 @@
 function integersList = extractIntegersFromFilenames(patient_id, comp_options, enc_id, image_id, params)
     file_to_load = fullfile(sprintf('%s\\%s\\session%d\\%s\\%s\\%d-%d\\enc%s_image%s\\', ...
         params.output_folder, num2str(patient_id), params.session_id, comp_options{1}, params.btwn_trial_type,  params.freq_min, params.freq_max, num2str(enc_id), num2str(image_id)));
+    if params.hellbender
+        file_to_load = strrep(file_to_load, '\', '/'); % linux instead of windows. I thought fullfile() was supposed to automatically handle that but apparently not.
+    end
+    
     % Function to extract the integer at the end of each filename in a directory
     % Inputs:
     %   directoryPath - the path to the directory containing the files
