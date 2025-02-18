@@ -8,6 +8,7 @@ custom_params = struct();
 custom_params.k12wm = false;
 custom_params.output_folder_name = 'middle_fixation_baseline';
 custom_params.hellbender = true;
+custom_params.clip_inf_similarities = true;
 params = get_parameters(custom_params);
 
 %% select data
@@ -75,7 +76,7 @@ if plot_params.recompute_table
             suffix = 'utah';
         end
 
-        save_file = sprintf('summary_p_tables_midbase_%d-%dhz_%s.mat', params.freq_min, params.freq_max, suffix);
+        save_file = sprintf('summary_p_tables_midbase_%d-%dhz_%s_clip_infs.mat', params.freq_min, params.freq_max, suffix);
         fprintf("saving %s", save_file)
 
         save(save_file, 'all_p_table')
@@ -186,6 +187,9 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
                     continue
                 end
         
+                if params.clip_inf_similarities
+                   [WI, BI] = clip_infs_of_z_similarities(WI,BI);
+                end
         
                 % temporal generalization
                 if plot_params.mean_out_time_dimensions
@@ -209,6 +213,16 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
                 [surrogate_t_values, surrogate_p_values, surrogate_diff] = calc_surrogate(WI, BI, 1000, plot_params.average_diff, plot_params.mean_out_time_dimensions);
                 % save(sprintf("%s/significant_cluster_data.mat", plot_params.WI_BI_folder_to_save_in),"real_p_values", "real_t_values", "surrogate_t_values", "surrogate_p_values", "surrogate_diff")
         
+                if any(isnan(real_t_values))
+                    error("nans detected in real_t_values.")
+                elseif any(isnan(real_p_values))
+                    error("nans detecte in real_p_values")
+                elseif any(isnan(surrogate_p_values))
+                    error("nans detected in surrogate_p_values")
+                elseif any(isnan(surrogate_t_values))
+                    error("nans detected in surrogate_t_values")
+                end
+
                 final_p = mean(real_t_values > surrogate_t_values);
         
                     % Create the table
