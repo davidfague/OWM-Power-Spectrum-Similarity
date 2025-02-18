@@ -7,8 +7,11 @@ function params = get_parameters(custom_params, save_script, save_values)
 %% specify working directory
 
 % check local directory below too
-working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
-working_dir = "/mnt/pixstor/data/drfrbc/OWM-Power-Spectrum-Similarity/";
+if ~custom_params.hellbender
+    working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
+elseif custom_params.hellbender
+    working_dir = "/mnt/pixstor/data/drfrbc/OWM-Power-Spectrum-Similarity/";
+end
 %% addpath all utils
 
 % addpath(fullfile(strcat(working_dir,'\subfunctions')))
