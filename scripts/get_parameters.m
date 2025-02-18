@@ -147,6 +147,8 @@ params.btwn_trial_type = 'EMS'; % default
 params.comp_options = {'corr BT BI', 'corr BT WI'}; % between trial comparison types (between image or within image)
 % note that compute_ES_btwn_trials_v6.m is only equipped to handle EMS, EES.
 
+params.clip_inf_similarities = false; % clipped in post processing (plotitng) only.
+
 %% write this file,params to the output_folder
 
 % saves default to empty if not passed.
