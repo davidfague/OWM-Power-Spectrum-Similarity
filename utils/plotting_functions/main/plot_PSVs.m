@@ -1,4 +1,6 @@
 function plot_PSVs(params, plot_params, without_image)
+% plots the whole-trial PSVS for the individual trial or mean across trials for a specific chan, image,
+% enc slice.
     folder_to_save_in = sprintf("results/PSV plots/same_clims/p%s chan%s image%s enc%s", ...
                 num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
                 num2str(plot_params.image_id), num2str(plot_params.enc_id));
@@ -11,8 +13,8 @@ function plot_PSVs(params, plot_params, without_image)
     load(PS_file, "label_table")
     
     % subset table by plot_params
-    % rows with the image and plot_params
-    if ~without_image
+    if ~without_image 
+        % rows with the image and plot_params
         rows_to_use = label_table.channel_ID == plot_params.chan_id & ... % channel
         label_table.patient_ID == plot_params.patient_id & ... % patient
         label_table.encID_to_imageID(:,plot_params.enc_id)==plot_params.image_id & ... % image in first encoding
@@ -24,7 +26,7 @@ function plot_PSVs(params, plot_params, without_image)
         sum(label_table.encID_to_imageID(:,:)~=plot_params.image_id,2)==3 & ... % image in first encoding
         sum(label_table.encoding_correctness(:,:), 2)==3; % all 3 correct
     end
-    rows_to_use = ones(size(rows_to_use));
+    % rows_to_use = ones(size(rows_to_use));
 
     subset_table = label_table(rows_to_use,:); % can check
     
