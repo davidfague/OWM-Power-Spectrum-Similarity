@@ -11,6 +11,10 @@ function integersList = extractIntegersFromFilenames(patient_id, comp_options, e
     % Outputs:
     %   integersList - a list of integers extracted from the filenames
 
+    if ~isfolder(file_to_load)
+        error("%s is not a directory", file_to_load)
+    end
+
     % Get a list of all files in the directory
     files = dir(file_to_load);
     
