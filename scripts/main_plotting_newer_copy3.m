@@ -149,7 +149,11 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
         disp(patient_preprocessed_data_path)
 
         if params.k12wm
-            prefix = strsplit(patient_preprocessed_data_path,'\');
+            if params.hellbender
+                prefix = strsplit(patient_preprocessed_data_path,'/'); % linux
+            else
+                prefix = strsplit(patient_preprocessed_data_path,'\');
+            end
             prefix = prefix{end};
             labels = load(fullfile(patient_preprocessed_data_path, sprintf("%s_labelsAnat.mat", prefix)));
             anat_labels = struct();
