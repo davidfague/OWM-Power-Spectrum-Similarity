@@ -47,13 +47,13 @@ function plot_PSVs(params, plot_params, without_image)
     subset_table = subset_table(rows_without_nans,:);
     clear all_windowed_mean_PS_vectors
     
-    % flattened_data = possible_PSVs_for_this_obs(plot_params.enc_window_ids, :, :);
+    flattened_data = possible_PSVs_for_this_obs(plot_params.enc_window_ids, :, :);
     % Calculate the mean and standard deviation of the flattened data
-    % data_mean = mean(flattened_data(:));
-    % data_std = std(flattened_data(:));
+    data_mean = mean(flattened_data(:));
+    data_std = std(flattened_data(:));
     % Set the color limits to be 2 standard deviations around the mean
-    % clims_to_use = [data_mean - 2*data_std, data_mean + 2*data_std];
-    clims_to_use = [-1, 2];% with:[-3.3583    4.5770]; without: [-3.5836    4.3866]
+    clims_to_use = [data_mean - 2*data_std, data_mean + 2*data_std];
+    % clims_to_use = [-1, 2];% with:[-3.3583    4.5770]; without: [-3.5836    4.3866]
     
     max_iter = 9;
     max_iter_to_use = min(max_iter, size(possible_PSVs_for_this_obs,3));

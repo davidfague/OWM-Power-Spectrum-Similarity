@@ -7,21 +7,21 @@ function fig = plot_similarity_means_heatmap(WI,BI, plot_params)
         imagesc(mean(WI,3))
         colormap('jet')
         colorbar;
-        clim([0, 0.3])% clim([-0.15, 0.3])
+        clim([-0.1, 0.5])% clim([-0.15, 0.3])
         title(sprintf('Within-Images mean N=%s(trial pairs)', num2str(size(WI,3))))
 
         subplot(1,3,2)
         imagesc(mean(BI,3))
                 colormap('jet')
         colorbar;
-        clim([0, 0.3])% clim([-0.15, 0.3])
+        clim([-0.1, 0.5])% clim([-0.15, 0.3])
         title(sprintf('Between-Images mean N=%s(trial pairs)', num2str(size(BI,3))))
 
         subplot(1,3,3)
         imagesc(mean(WI,3)-mean(BI,3))
         colormap('jet')
         colorbar;
-        clim([0, 0.3])% clim([-0.15, 0.3])
+        % clim([0, 0.3])% clim([-0.15, 0.3])
         title(sprintf('mean WI - mean BI'))
 
 

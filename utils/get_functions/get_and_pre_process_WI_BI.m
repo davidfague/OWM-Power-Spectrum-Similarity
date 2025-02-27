@@ -20,7 +20,7 @@ function [EMS_WI,EMS_BI] = get_and_pre_process_WI_BI(patient_id, comp_options, e
         end
 
         % Create logical indices to omit same-trial pairs for WI
-        [logicalIdx1, logicalIdx2] = createLogicalIndex(size(WI.BT_ES, 3));
+        [~, logicalIdx2] = createLogicalIndex(size(WI.BT_ES, 3));
     
         % Process EMS data
         EMS_WI = WI.BT_ES(:, :, logicalIdx2); % omits diagonal (same-trial pairs)
