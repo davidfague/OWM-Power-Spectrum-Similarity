@@ -1,4 +1,6 @@
 function plot_PSVs(params, plot_params, without_image)
+% plots the whole-trial PSVS for the individual trial or mean across trials for a specific chan, image,
+% enc slice.
     folder_to_save_in = sprintf("results/PSV plots/same_clims/p%s chan%s image%s enc%s", ...
                 num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
                 num2str(plot_params.image_id), num2str(plot_params.enc_id));
@@ -11,8 +13,8 @@ function plot_PSVs(params, plot_params, without_image)
     load(PS_file, "label_table")
     
     % subset table by plot_params
-    % rows with the image and plot_params
-    if ~without_image
+    if ~without_image 
+        % rows with the image and plot_params
         rows_to_use = label_table.channel_ID == plot_params.chan_id & ... % channel
         label_table.patient_ID == plot_params.patient_id & ... % patient
         label_table.encID_to_imageID(:,plot_params.enc_id)==plot_params.image_id & ... % image in first encoding
@@ -24,7 +26,7 @@ function plot_PSVs(params, plot_params, without_image)
         sum(label_table.encID_to_imageID(:,:)~=plot_params.image_id,2)==3 & ... % image in first encoding
         sum(label_table.encoding_correctness(:,:), 2)==3; % all 3 correct
     end
-    rows_to_use = ones(size(rows_to_use));
+    % rows_to_use = ones(size(rows_to_use));
 
     subset_table = label_table(rows_to_use,:); % can check
     
@@ -45,13 +47,13 @@ function plot_PSVs(params, plot_params, without_image)
     subset_table = subset_table(rows_without_nans,:);
     clear all_windowed_mean_PS_vectors
     
-    % flattened_data = possible_PSVs_for_this_obs(plot_params.enc_window_ids, :, :);
+    flattened_data = possible_PSVs_for_this_obs(plot_params.enc_window_ids, :, :);
     % Calculate the mean and standard deviation of the flattened data
-    % data_mean = mean(flattened_data(:));
-    % data_std = std(flattened_data(:));
+    data_mean = mean(flattened_data(:));
+    data_std = std(flattened_data(:));
     % Set the color limits to be 2 standard deviations around the mean
-    % clims_to_use = [data_mean - 2*data_std, data_mean + 2*data_std];
-    clims_to_use = [-1, 2];% with:[-3.3583    4.5770]; without: [-3.5836    4.3866]
+    clims_to_use = [data_mean - 2*data_std, data_mean + 2*data_std];
+    % clims_to_use = [-1, 2];% with:[-3.3583    4.5770]; without: [-3.5836    4.3866]
     
     max_iter = 9;
     max_iter_to_use = min(max_iter, size(possible_PSVs_for_this_obs,3));

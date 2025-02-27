@@ -7,12 +7,15 @@ function params = get_parameters(custom_params, save_script, save_values)
 %% specify working directory
 
 % check local directory below too
-working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
-
+if ~custom_params.hellbender
+    working_dir = 'C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\'; % maybe call it repo_dir instead. Actual working_dir would be /scripts
+elseif custom_params.hellbender
+    working_dir = "/mnt/pixstor/data/drfrbc/OWM-Power-Spectrum-Similarity/";
+end
 %% addpath all utils
 
 % addpath(fullfile(strcat(working_dir,'\subfunctions')))
-utils_dir = fullfile(strcat(working_dir,'\utils'));
+utils_dir = fullfile(strcat(working_dir,'utils'));
 addSubDirs(utils_dir)
 
 function addSubDirs(dirName)
@@ -46,6 +49,7 @@ params.num_wrkrs_local = 2;
 params.init_par_pool = false;  % enable to run parfor
 params.output_folder_name = 'allpatients gammamod allregions allitem allenc baseline across trials';
 params.processed_data_dir = '../processed_data/';
+params.ES_freq_band = 1:40;
 
 %% Override first set of defaults with any custom parameters
 
@@ -71,7 +75,7 @@ end
 
 if params.hellbender
     params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
-    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/parallel output/', params.output_folder_name);
+    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name);
     params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/');
     params.local_directory = fullfile('/home/drfrbc/Power Spectrum Similarity/');
 else
@@ -84,9 +88,14 @@ end
 if params.k12wm
     params.time = 1:7001;
     params.patient_IDs = [004, 005, 006, 007, 008, 009, 010];
-    params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');
-    params.preprocessed_data_location = fullfile('../../../..//k12wm/');
-    params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
+    if params.hellbender
+        params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name, '/k12wm/');
+        params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/k12wm/');
+    else
+        params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');
+        params.preprocessed_data_location = fullfile('../../../..//k12wm/');
+        params.local_directory = fullfile('C:\Users\drfrbc\OneDrive - University of Missouri\data\RSA_analysis\Code\OWM-Power-Spectrum-Similarity\');
+    end
 else
     params.time = 1:9001;
 end
@@ -130,12 +139,15 @@ params.use_gamma_mod_chans = [true];%, false]; % [true, false] means all channel
 % images_to_process = {}; %P046
 
 % for ES
-params.ES_freq_band = 1:40;
+params.freq_min = min(params.ES_freq_band);
+params.freq_max = max(params.ES_freq_band);
 
 % between trials similarity
 params.btwn_trial_type = 'EMS'; % default
 params.comp_options = {'corr BT BI', 'corr BT WI'}; % between trial comparison types (between image or within image)
 % note that compute_ES_btwn_trials_v6.m is only equipped to handle EMS, EES.
+
+params.clip_inf_similarities = false; % clipped in post processing (plotitng) only.
 
 %% write this file,params to the output_folder
 

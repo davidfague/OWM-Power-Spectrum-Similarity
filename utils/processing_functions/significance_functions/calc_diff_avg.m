@@ -3,8 +3,13 @@ function diff = calc_diff_avg(WI, BI, num_means)
         % tic;
     
         % Move input matrices to GPU
-        WI = gpuArray(WI);
-        BI = gpuArray(BI);
+        try
+            WI = gpuArray(WI);
+            BI = gpuArray(BI);
+            has_gpus = true;
+        catch
+            has_gpus = false;
+        end
     
         % Get dimensions
         [t1_size, t2_size, num_WI] = size(WI);
@@ -13,11 +18,21 @@ function diff = calc_diff_avg(WI, BI, num_means)
     
         % Precompute random indices on the GPU
         if num_WI < num_BI
-            random_indices_WI = gpuArray(repmat(1:num_WI, [num_means, 1]));
-            random_indices_BI = gpuArray(randi(num_BI, num_means, num_WI));
+            if has_gpus
+                random_indices_WI = gpuArray(repmat(1:num_WI, [num_means, 1]));
+                random_indices_BI = gpuArray(randi(num_BI, num_means, num_WI));
+            else
+                random_indices_WI = repmat(1:num_WI, [num_means, 1]);
+                random_indices_BI = randi(num_BI, num_means, num_WI);
+            end
         else
-            random_indices_WI = gpuArray(randi(num_WI, num_means, num_BI));
-            random_indices_BI = gpuArray(repmat(1:num_BI, [num_means, 1]));
+            if has_gpus
+                random_indices_WI = gpuArray(randi(num_WI, num_means, num_BI));
+                random_indices_BI = gpuArray(repmat(1:num_BI, [num_means, 1]));
+            else
+                random_indices_WI = randi(num_WI, num_means, num_BI);
+                random_indices_BI = repmat(1:num_BI, [num_means, 1]);
+            end
         end
     
         % Flatten WI and BI matrices for processing
@@ -25,8 +40,13 @@ function diff = calc_diff_avg(WI, BI, num_means)
         BI = reshape(BI, [], num_BI); % (t1 * t2) x num_BI
     
         % Preallocate result matrices on GPU
-        WI_means = gpuArray.zeros(t1_size * t2_size, num_means, 'single');
-        BI_means = gpuArray.zeros(t1_size * t2_size, num_means, 'single');
+        if has_gpus
+            WI_means = gpuArray.zeros(t1_size * t2_size, num_means, 'single');
+            BI_means = gpuArray.zeros(t1_size * t2_size, num_means, 'single');
+        else
+            WI_means = zeros(t1_size * t2_size, num_means, 'single');
+            BI_means = zeros(t1_size * t2_size, num_means, 'single');
+        end
     
         % % Compute means across random indices in batches
         for k = 1:num_means
@@ -38,12 +58,12 @@ function diff = calc_diff_avg(WI, BI, num_means)
         diff = reshape(WI_means - BI_means, t1_size, t2_size, num_means);
     
         % Bring results back to CPU
-        diff = gather(diff);
+        % diff = gather(diff);
     
         % fprintf("Finished in %.2f seconds\n", toc);
     else
         % use this if temporally generalized
-            % Move the input matrices to GPU
+            % Move the input matrices to GPU % in this case overhead is not worth since 38 x 380 time dimension becomes 1x1
             % WI = gpuArray(WI);
             % BI = gpuArray(BI);
         

@@ -3,16 +3,31 @@ analysis_params = struct();
 analysis_params.min_npatient_per_region = 3;
 
 p_threshhold = 0.975;
+threshold_str = sprintf('p > %.3f', p_threshhold);
+
+freq_band = [1:8];
+freq_min = min(freq_band);
+freq_max = max(freq_band);
+
+freq_str = sprintf("%d-%dhz", freq_min, freq_max);
+
+k12wm = false;
+if k12wm
+    data_set_str = 'k12wm';
+else
+    data_set_str = 'utah';
+end
+
+table_to_load = sprintf('summary_p_tables_midbase_%s_%s_clip_infs.mat', freq_str, data_set_str);
+
+custom_params = struct();
+custom_params.hellbender = true;
+params = get_parameters(custom_params);
 %% load data
-% load('summary_utah_patients_table.mat')
-all = load("../results/new results/summary_p_tables_rebase_all_patients.mat", "all_patients_p_table");
-utah = load("../results/new results/summary_p_tables_rebase_utah_all.mat", "all_patients_p_table");
-k12wm = load('../results/new results/summary_p_tables_rebase_k12wm_all.mat', "all_patients_p_table");
 
-all_patients_p_table = all.all_patients_p_table; % select table
+loaded_table = load(table_to_load);
+all_patients_p_table = loaded_table.all_p_table;
 
-% addpath("../subfunctions/")
-params = get_parameters();
 
 %% remove missing
 all_patients_p_table = all_patients_p_table(~ismissing(all_patients_p_table.anat),:);
@@ -60,9 +75,12 @@ summaryTable = table(regions, totalOccurrences, totalAboveThreshold, fracAboveTh
 % % Display the summary table
 % disp(summaryTable);
 
-%% filter region
-
-load("../results/new results/regions_to_use.mat", "regions_to_use")
+%% filter region by at least 3 patients having the anat
+if params.hellbender
+    load("../results/regions_to_use.mat", "regions_to_use")
+else
+    load("..\results\regions_to_use.mat", "regions_to_use")
+end
 summaryTable_unfiltered = summaryTable;
 
 % filter based on regions meeting criteria in the all_patient_table
@@ -94,6 +112,18 @@ sortedAnat   = summaryTable.anat_merged(sortIdx);
 sortedOcc    = summaryTable.total_occurrences(sortIdx);
 sortedTotal    = summaryTable.total_above_threshold(sortIdx);
 
+%% move nans to bottom
+% Identify non-NaN and NaN indices in sortedFrac
+nonNaN_idx = ~isnan(sortedFrac);
+NaN_idx    = isnan(sortedFrac);
+
+% Reorder so non-NaNs come first and NaNs at the bottom
+sortedFrac   = [sortedFrac(nonNaN_idx); sortedFrac(NaN_idx)];
+sortedAnat   = [sortedAnat(nonNaN_idx); sortedAnat(NaN_idx)];
+sortedOcc    = [sortedOcc(nonNaN_idx); sortedOcc(NaN_idx)];
+sortedTotal  = [sortedTotal(nonNaN_idx); sortedTotal(NaN_idx)];
+
+%% plot histogram
 % Create new labels that include the anatomical region and the occurrence count (N)
 labels = cell(length(sortedAnat), 1);
 for i = 1:length(sortedAnat)
@@ -111,9 +141,9 @@ set(gca, 'YDir', 'reverse');
 set(gca, 'YTick', 1:length(labels), 'YTickLabel', labels);
 
 % Add axis labels and a title
-xlabel('Fraction Above Threshold');
-ylabel('Anatomical Region (with Occurrences)');
-title('Anatomical Regions Sorted by Descending Fraction Above Threshold');
+xlabel(sprintf('Fraction of Significant Observations %s', threshold_str));
+ylabel('Anatomical Region (n=observations (channels*images))');
+title(sprintf('Temporally Generalized Significant WI-BI\n%s\n%s\n%s', freq_str, threshold_str, data_set_str));
 % xlim([0 0.5]);
 
 % Optional: Adjust font size for better readability

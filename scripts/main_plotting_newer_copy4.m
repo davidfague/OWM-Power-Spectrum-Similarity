@@ -50,8 +50,21 @@ plot_params.same_n = true; % only affects plot_similarity_means_heatmaps
 
 plot_params.only_all3_correct = true; % filters test trials (with item)
 
+% es_freq_bands = {[1:8], [8:20], [20:40], [1:40]};
+es_freq_bands = {[30:70]};
+% es_freq_bands = {[1:40]};
+% look at power spectra to determine bands
+% 4:8
+% 8:12-14
+% 15:30
+% 30:70
+% 70:140
 
-es_freq_bands = {[1:8], [8:20], [20:40]};
+% mean spectra over time (whole trial(after fix)) and create some figures of different areas
+% mean,std across patients, channels for each area % mtg, mfg, hippocampus,
+% amygdala
+
+% correct plot
 %%
 plot_params.recompute_table = true;
 % params.patient_IDs = [010];

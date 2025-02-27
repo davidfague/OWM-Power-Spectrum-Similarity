@@ -1,20 +1,39 @@
-%% compute fixation-baselined, z-scored power vectors
-%% v6 reenabling parfor (didn't work). adding inform the user of progress during processing
-%% v5 implementing parameters.m
-%% v4 redoing the new v3 computation because getting the 'valid' indices & subsetting was becoming too complicated and not working when trying to pass only valid trials to compute_Zpower.
-% now saving PSVs and label_table with nrows = (trials_to_process x channels_to_process) instead
-% of doing some extra filtering after initialization and before processing.
-%% v3 re-enabling bootstrap zbaseline across trials. Need to pass all non-nan channel data instead of individual trial-channel data?
-% update save name, update data passed
-%% v2: changing file inputs to use OneDrive instead of ExternalHD; use original patient path instead of copying preprocessed data files into 'Raw Data Storage'
+% function label_table = fix_anat_labels(label_table, labelsAnat)
+%     channels = unique(label_table.channel_ID);
+%     for chan_idx = 1:length(channels)
+%         channel_ID = channels(chan_idx);
+%         rows_of_channel = label_table.channel_ID == channel_ID;
+% 
+%         corrected_anat = labelsAnat(channel_ID);
+%         previous_anat = unique(label_table.anatomical_label(rows_of_channel));
+% 
+%         if previous_anat ~= corrected_anat 
+%             label_table.anatomical_label(rows_of_channel) = corrected_anat;
+%         end
+% 
+%     end
+% end
+% 
+% function get_preprocessed_data_folder
+% 
+% end
+% 
+% function fix_all_label_tables(processed_data_dir)
+%     for file = files
+%         file_table = load(file, 'label_table');
+% 
+%         file_table.label_table
+%     end
+% end
 
-%% Setup Paths
+
+%% Could just alter Zpower_and_PSVs to update them:
 
 custom_params = struct();
 custom_params.k12wm = true;
-custom_params.patient_IDs = [ 005, 006, 007, 008, 009, 010];
+% custom_params.patient_IDs = [201905];
 custom_params.baseline_T_lims = [-0.75, -0.25];
-custom_params.hellbender = true;
+custom_params.hellbender = false;
 custom_params.output_folder_name = 'middle_fixation_baseline';
 
 params = get_parameters(custom_params);
@@ -131,105 +150,25 @@ for idx = 1:length(params.patient_IDs)
         clear is_gamma_channels channel_brain_locations_to_process enc_to_imageID enc_correctness
         % Assign meaningful variable names to the table
         label_table.Properties.VariableNames = {'patient_ID', 'channel_ID', 'anatomical_label', 'channel_is_gamma','encID_to_imageID', 'encoding_correctness', 'trial_ID', 'session_ID'};
-        
-        %% computing
-        tic;
-        if ~(length(channels_to_process) == length(unique(label_table.channel_ID)))
-            error("channels_to_process should be the unique channels in label_table, [%s %s]", num2str(length(channels_to_process)), numstr(length(unique(label_table.channel_ID))))
-        end
-    
-        all_windowed_mean_PS_vectors = nan(params.num_windows, params.num_PSV_frequencies, size(label_table,1)); % num_windows, num_frequencies, num_rows
-    
-        % % Precompute row indices for faster access % trying to speed/parallelize
-        % row_indices = nan(length(channels_to_process), num_trials);
-        % for chan_id = 1:length(channels_to_process)
-        %     for trial_id = 1:num_trials
-        %         row_id = find(label_table.channel_ID == channels_to_process(chan_id) & label_table.trial_ID == trial_id);
-        %         if ~isempty(row_id)
-        %             row_indices(chan_id, trial_id) = row_id;
-        %         end
-        %     end
-        % end
-    
-        for chan_id = 1:length(channels_to_process)
-            original_channel_id = channels_to_process(chan_id);
-            fprintf("  Processing chan %s\n", num2str(original_channel_id))
-            % compute Zbaseline power for all trials for this channel
-            valid_trials_mask = all(~isnan(D_OWM_t_file.D_OWM_t(original_channel_id, :, :)), 2);
-            valid_trials = find(valid_trials_mask);
-    
-            % Extract all valid trials for the channel
-            if params.baseline_across_trials
-                time_data = D_OWM_t_file.D_OWM_t(original_channel_id, :, valid_trials); % Pass all valid trials for this channel to Zpower
-        
-                if numel(time_data) == 0
-                    fprintf("   SKIPPING because time_data is %s not valid\n", num2str(size(time_data)))
-                    continue
-                end
-    
-                % Compute Zpower for all valid trials
-                Zpower = compute_Zpower_v3(time_data, params);
-            end
-    
-            % Compute windowed mean power spectral vectors for each trial
-            for trial_i = 1:length(valid_trials)
-                trial_id = valid_trials(trial_i);
-    
-                % row_id = row_indices(chan_id, trial_id); % method utilizing
-                % precomputation
-                row_id = find(label_table.channel_ID == channels_to_process(chan_id) & label_table.trial_ID == trial_id);
-                
-                if length(row_id) > 1 | isempty(row_id)
-                    error("should be one row per chan x trial. %s pairs found", num2str(length(row_id)))
-                end
-    
-                if ~params.baseline_across_trials % compute power for this trial
-                    time_data = D_OWM_t_file.D_OWM_t(original_channel_id, :, trial_id); % Pass all valid trials for this channel to Zpower
-                    Zpower = compute_Zpower_v3(time_data, params);
-                    trial_Zpower = squeeze(Zpower);
-                else
-                                % Extract Zpower for the specific trial
-                    trial_Zpower = squeeze(Zpower(trial_i, :, :)); % Slice the Zpower for the trial
-                end
-        
-                % Compute windowed mean power vectors for the trial
-                windowed_mean_PS_vectors = compute_windowed_mean_PS_vectors(trial_Zpower, params);
-        
-                % Store the result in the preallocated matrix
-                all_windowed_mean_PS_vectors(:, :, row_id) = windowed_mean_PS_vectors;
-
-                clear row_id trial_id 
-    
-            end
-            clear Zpower time_data trial_Zpower
-        end
-    
-        elapsed=toc;
-        fprintf("Finished in %.2f seconds\n", elapsed); % 100 minutes
-        clear time_data Zpower windowed_mean_PS_vectors
-        % save
-        % save_file = strcat(fullfile(output_folder, num2str(patient_ID)), '.mat');
-        if ~exist(fullfile(params.output_folder, num2str(patient_ID)), "file")
-            mkdir(fullfile(params.output_folder, num2str(patient_ID)))
-        end
     
         save_file = get_PS_file(params, num2str(patient_ID), false);
         write_current_script_to_destination(fullfile(params.output_folder, num2str(patient_ID)), strcat(mfilename('fullpath'), '.m'));
-        save(save_file, 'all_windowed_mean_PS_vectors', 'label_table', '-v7.3')
-        clear all_windowed_mean_PS_vectors label_table save_file
+
+        prev_table = load(save_file,'label_table');
+        total = length(label_table.anatomical_label);
+        old_labels = string(prev_table.label_table.anatomical_label);
+        new_labels = string(label_table.anatomical_label);
+        same_rows = strcmp(old_labels, new_labels) | (ismissing(old_labels) & ismissing(new_labels));
+        compare_table = table(...
+            prev_table.label_table.anatomical_label(~same_rows), ...
+            label_table.anatomical_label(~same_rows), ...
+            'VariableNames', {'old', 'new'});
+        percent_new = (1 - (sum(same_rows)/total)) * 100;
+        fprintf("percent_new %d\n", percent_new);
+
+        save(save_file, 'label_table', '-v7.3', '-append')
+        clear label_table save_file
     end
 end
 
 delete(gcp('nocreate'))
-
-function windowed_mean_PS_vectors = compute_windowed_mean_PS_vectors(Zpower, params)
-
-    % Preallocate the output matrix
-    windowed_mean_PS_vectors = zeros(length(params.window_IDs_to_use), length(params.PSV_freq_band));
-    
-    % Compute the windowed mean power spectral vectors
-    for i = 1:length(params.window_IDs_to_use)
-        window_ID = params.window_IDs_to_use(i);
-        windowed_mean_PS_vectors(i, :) = mean(Zpower(params.PSV_freq_band, params.window_start_times(window_ID):params.window_end_times(window_ID)), 2)';
-    end
-end
