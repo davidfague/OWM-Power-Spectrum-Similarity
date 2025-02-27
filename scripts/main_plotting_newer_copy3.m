@@ -172,7 +172,7 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
             for chan_idx = 1:length(channel_ids_to_use)
                 chan_id = channel_ids_to_use(chan_idx);
                 plot_param.chan_id = chan_id;
-                fprintf("p%s session%d chan%s image%s\n", num2str(patient_id), session_idx, num2str(chan_id), num2str(image_id));
+                fprintf("p%s session%d chan%s image%s %d-%dHz\n", num2str(patient_id), session_idx, num2str(chan_id), num2str(image_id), params.freq_min, params.freq_max);
                 anat = string(anat_labels.labelsanatbkedit.anatmacro1(chan_id));
 
                 % get WI, BI matrices; size: (nEtimes, nMtimes, nTrialCombinations)
@@ -230,15 +230,11 @@ function all_p_table = calc_WI_vs_BI_table(params, plot_params, all_p_table)
                 final_p = mean(real_t_values > surrogate_t_values);
         
                     % Create the table
-                try
                 result_table = table(patient_id, ...
                                      chan_id, final_p, anat, ...
                                      image_id, ...
                                      session_idx, ...
                                      'VariableNames', {'patient_id', 'chan_id', 'p', 'anat', 'image_id', 'session_id'});
-                catch
-                    disp('hold up')
-                end
                 
                 all_p_table = [all_p_table; result_table];
             end
