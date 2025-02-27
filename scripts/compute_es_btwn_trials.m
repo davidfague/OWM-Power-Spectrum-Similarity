@@ -12,26 +12,22 @@ clear all
 close all
 
 %% parameters
-es_freq_bands = {[8:20], [20:40]};
+es_freq_bands = {[8:12]};
 
 custom_params = struct();
+custom_params.hellbender = false;
+custom_params.output_folder_name = 'middle_fixation_baseline';
+% custom_params.patient_IDs = [201907, 201908, 201910, 201915];
+
+target_enc_ids = 1; 
+target_image_ids = 1:9;
+
 for k12wm = [true, false]
     custom_params.k12wm = k12wm;
     for i = 1:length(es_freq_bands)
         custom_params.ES_freq_band = es_freq_bands{i}
-        custom_params.hellbender = true;
-        % custom_params.patient_IDs = [201907, 201908, 201910, 201915];
-        custom_params.output_folder_name = 'middle_fixation_baseline';
-        % custom_params.ES_freq_band = 1:8;
-        
-        % custom_params.patient_IDs = [201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
-        params = get_parameters(custom_params);
-            % temp params
-        % params.within_item = false; % computes control as either within item or between items
-        % params.btwn_trial_type = 'EMS'; % default should be 'EMS'
-        
-        target_enc_ids = 1; 
-        target_image_ids = 1:9;
+
+        params = get_parameters(custom_params); 
         
         %% main loop
         
