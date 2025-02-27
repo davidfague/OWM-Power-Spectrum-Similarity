@@ -158,9 +158,13 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
         params.processed_channels=[]; % start counting for within_item
     end
 
+    channels_to_bt_es = containers.Map('KeyType', 'int32' , 'ValueType', 'any');
+
+    save_file = fullfile(save_folder, sprintf('all_channels_bt_es.mat'));
+
     for chan_idx = 1:length(unique_channel_IDs)
         chan_id = unique_channel_IDs(chan_idx);
-        save_file = fullfile(save_folder, sprintf('BT_%d.mat', chan_id));
+        % save_file = fullfile(save_folder, sprintf('BT_%d.mat', chan_id));
 
         % Filter data for the current channel ID
         chan_test_rows = filter_by_channel_id(item_cor_table, chan_id);
@@ -195,7 +199,8 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
             windows2 = params.maint_win_IDs;
         end
 
-        BT_ES = nan(length(windows1), length(windows2), num_ctrl_trials, num_test_trials); % Initialize results array
+        bt_es = struct();
+        bt_es_matrix = nan(length(windows1), length(windows2), num_ctrl_trials, num_test_trials); % Initialize results array
 
         % Compute similarity matrices for each test-control trial pair
         for test_trial_idx = 1:num_test_trials
@@ -206,20 +211,22 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
                    all(all(chan_test_PSVs(:, :, test_trial_idx) == 0))
                     % Skip invalid data
                     error("skipping because nans or all zeros") % shouldn't get here anymore since above checks. so I replaced with error instead of warning.
-                    BT_ES(:, :, ctrl_trial_idx, test_trial_idx) = nan(size(BT_ES, [1, 2]));
+                    bt_es_matrix(:, :, ctrl_trial_idx, test_trial_idx) = nan(size(bt_es_matrix, [1, 2]));
                 else
                     % Compute and store the result for the pair
-                    BT_ES(:, :, ctrl_trial_idx, test_trial_idx) = compute_BT_similarity_matrix( ...
+                    bt_es_matrix(:, :, ctrl_trial_idx, test_trial_idx) = compute_BT_similarity_matrix( ...
                         chan_test_PSVs(:, :, test_trial_idx), chan_ctrl_PSVs(:, :, ctrl_trial_idx), ...
                         windows1, windows2);
                 end
             end
         end
-
-        % Save results
-        save(save_file, "chan_id", "BT_ES", "chan_test_table", "chan_ctrl_table");
+        bt_es.matrix = bt_es_matrix;
+        bt_es.chan_test_table = chan_test_table;
+        bt_es.chan_ctrl_table = chan_ctrl_table;
+        channels_to_bt_es(int32(chan_id)) = bt_es;
         
     end
+    save(save_file, "channels_to_bt_es");
 end
 
 function rows = filter_rows(label_table, target_image_ids, target_enc_ids)
