@@ -22,12 +22,12 @@ params = get_parameters(custom_params);
 use_parallel = false; % not implemented
 %% loop through patients
 
-for freq_band_idx = 1:length(params.bands)
+for freq_band_idx = 1%:length(params.bands)
     params.band_name_to_process = params.bands{freq_band_idx};
     params.band_to_process = params.freq_band_map(params.band_name_to_process);
     fprintf("Processing freg_band %s\n", num2str(params.band_name_to_process))
 
-    for idx = 1:length(params.patient_IDs)
+    for idx = 1%:length(params.patient_IDs)
         params.patient_ID = params.patient_IDs(idx);
         fprintf("Processing patient %s\n", num2str(params.patient_ID))
     
