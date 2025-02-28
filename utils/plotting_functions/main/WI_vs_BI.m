@@ -51,6 +51,7 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting)
             final_p = mean(t_test_info.surrogate_t_values < t_test_info.real_t_values); % left sided
         end
         clusters_info = [];
+        return % do not do the plotting at the bottom.
     else
         % perform cluster significance testing
         [clusters_info] = measure_cluster_significance( ...

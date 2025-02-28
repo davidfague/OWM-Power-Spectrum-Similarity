@@ -49,9 +49,9 @@ params.es_freq_bands = {[1:40]};%{[4:8],[8:12],[12:30], [30:70]};
 params.patient_preprocessed_data_paths = get_patient_preprocessed_data_path(params, params.patient_id);
 params.patient_preprocessed_data_path = params.patient_preprocessed_data_paths{params.session_id};
 
-params.WI_BI_folder_to_save_in = sprintf("results/WI vs BI/p%s chan%s image%s enc%s sess%d", ...
+params.WI_BI_folder_to_save_in = fullfile(sprintf("results/WI vs BI/p%s chan%s image%s enc%s sess%d", ...
             num2str(params.patient_id), num2str(params.chan_id), ...
-            num2str(params.image_id), num2str(params.enc_id), params.session_id);
+            num2str(params.image_id), num2str(params.enc_id), params.session_id));
 
 params.anat_labels = get_anat_labels(params.patient_preprocessed_data_path, params);
 

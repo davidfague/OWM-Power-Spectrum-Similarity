@@ -121,8 +121,20 @@ params.window_IDs_to_use = find_valid_window_IDs_from_ntimes_logical_array(param
 [params.fixation_win_IDs, params.enc1_win_IDs, params.enc2_win_IDs, params.enc3_win_IDs, params.maint_win_IDs, params.non_recall_win_IDs, params.all_win_IDs] = get_window_IDs(params);
 
 % for computing power
-params.PSV_freq_band = 1:100;
-params.num_PSV_frequencies = length(params.PSV_freq_band);
+params.PSV_freq_band = 1:100; % previous implementation
+params.freq_spacing = "log"; % spacing between points in each band
+params.num_frequencies = 40; % for each band
+params.freq_band_map = containers.Map({'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma'}, ...
+                                      {[1,4], [4,8], [8,12], [12,30], [30,70]});
+params.bands = keys(params.freq_band_map);
+for band_idx = 1:length(params.bands)
+    band = struct();
+    band.name = params.bands{band_idx};
+    band.range = params.freq_band_map(band.name);
+    band.frequencies = get_frequencies(params.num_frequencies, band.range, params.freq_spacing);
+    params.freq_band_map(band.name) = band;
+end
+% params.num_PSV_frequencies = length(params.PSV_freq_band);
 params.Fsample = 1000;
 params.wavenum = 6;
 
