@@ -3,9 +3,11 @@ function [t_values, p_values] = calc_ttest(diff)
     % tic;
     dim1 = size(diff,1);
     dim2 = size(diff,2);
+
     t_values = zeros(dim1, dim2);
     p_values = zeros(dim1, dim2);
-    if dim1 > 1
+
+    if dim1 > 1 % not temporally generalized size=(E,M,K) use parfor.
         parfor i = 1:dim1
             for j = 1:dim2
                 % Extract the distribution for the current time-time pair
@@ -20,7 +22,8 @@ function [t_values, p_values] = calc_ttest(diff)
             end
         end
         % fprintf("finished parfor t-test in %s\n", num2str(toc))
-    else
+
+    else % temporally generalized size=(1,1,K)
         for i = 1:dim1
             for j = 1:dim2
                 % Extract the distribution for the current time-time pair
@@ -36,9 +39,13 @@ function [t_values, p_values] = calc_ttest(diff)
         end
         % fprintf("finished for-loop t-test in %s\n", num2str(toc))
     end
+
+    if any(isnan(p_values), "all") || any(isnan(t_values), "all")
+        error("t_values or p_values from t-test contains nan")
+    end
 end
 
-% this is slower
+% gpus overhead is slower it seems
 % function [t_values, p_values] = calc_ttest(diff)
 %     tic;
 %     % diff = gpuArray(diff);

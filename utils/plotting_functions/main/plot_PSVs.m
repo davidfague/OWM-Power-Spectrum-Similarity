@@ -1,29 +1,29 @@
-function plot_PSVs(params, plot_params, without_image)
+function plot_PSVs(params, without_image)
 % plots the whole-trial PSVS for the individual trial or mean across trials for a specific chan, image,
 % enc slice.
     folder_to_save_in = sprintf("results/PSV plots/same_clims/p%s chan%s image%s enc%s", ...
-                num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
-                num2str(plot_params.image_id), num2str(plot_params.enc_id));
+                num2str(params.patient_id), num2str(params.chan_id), ...
+                num2str(params.image_id), num2str(params.enc_id));
     mkdir(folder_to_save_in)
     mkdir(sprintf("%s/single obs/", folder_to_save_in))
     mkdir(sprintf("%s/mean across trials/", folder_to_save_in))
     
     % load PSV
-    PS_file = get_PS_file(params, plot_params.patient_id, false);
+    PS_file = get_PS_file(params, params.patient_id, false);
     load(PS_file, "label_table")
     
-    % subset table by plot_params
+    % subset table by params
     if ~without_image 
-        % rows with the image and plot_params
-        rows_to_use = label_table.channel_ID == plot_params.chan_id & ... % channel
-        label_table.patient_ID == plot_params.patient_id & ... % patient
-        label_table.encID_to_imageID(:,plot_params.enc_id)==plot_params.image_id & ... % image in first encoding
+        % rows with the image and params
+        rows_to_use = label_table.channel_ID == params.chan_id & ... % channel
+        label_table.patient_ID == params.patient_id & ... % patient
+        label_table.encID_to_imageID(:,params.enc_id)==params.image_id & ... % image in first encoding
         sum(label_table.encoding_correctness(:,:), 2)==3; % all 3 correct
     else
         % rows without the image
-        rows_to_use = label_table.channel_ID == plot_params.chan_id & ... % channel
-        label_table.patient_ID == plot_params.patient_id & ... % patient
-        sum(label_table.encID_to_imageID(:,:)~=plot_params.image_id,2)==3 & ... % image in first encoding
+        rows_to_use = label_table.channel_ID == params.chan_id & ... % channel
+        label_table.patient_ID == params.patient_id & ... % patient
+        sum(label_table.encID_to_imageID(:,:)~=params.image_id,2)==3 & ... % image in first encoding
         sum(label_table.encoding_correctness(:,:), 2)==3; % all 3 correct
     end
     % rows_to_use = ones(size(rows_to_use));
@@ -31,10 +31,10 @@ function plot_PSVs(params, plot_params, without_image)
     subset_table = label_table(rows_to_use,:); % can check
     
     % get anat from table
-    plot_params.anat = unique(string(label_table(rows_to_use,:).anatomical_label)); % get anat from table
+    params.anat = unique(string(label_table(rows_to_use,:).anatomical_label)); % get anat from table
     % clear label_table %now would be the time to do it but probably keep for
     % using trial_id
-    if length(plot_params.anat) > 1
+    if length(params.anat) > 1
         error("should only detect one anat")
     end
     
@@ -47,7 +47,7 @@ function plot_PSVs(params, plot_params, without_image)
     subset_table = subset_table(rows_without_nans,:);
     clear all_windowed_mean_PS_vectors
     
-    flattened_data = possible_PSVs_for_this_obs(plot_params.enc_window_ids, :, :);
+    flattened_data = possible_PSVs_for_this_obs(params.enc_window_ids, :, :);
     % Calculate the mean and standard deviation of the flattened data
     data_mean = mean(flattened_data(:));
     data_std = std(flattened_data(:));
@@ -60,21 +60,21 @@ function plot_PSVs(params, plot_params, without_image)
     for obs_slice = 1:max_iter_to_use % can also select 1
         if ~without_image
             title_str = sprintf("p%s chan%s image%s enc%s trial%s", ...
-                num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
-                num2str(plot_params.image_id), num2str(plot_params.enc_id), ...
+                num2str(params.patient_id), num2str(params.chan_id), ...
+                num2str(params.image_id), num2str(params.enc_id), ...
                 num2str(subset_table(obs_slice,:).trial_ID));
         else
              title_str = sprintf("p%s chan%s WITHOUT image%s enc%s trial%s", ...
-                num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
-                num2str(plot_params.image_id), num2str(plot_params.enc_id), ...
+                num2str(params.patient_id), num2str(params.chan_id), ...
+                num2str(params.image_id), num2str(params.enc_id), ...
                 num2str(subset_table(obs_slice,:).trial_ID));
         end
-        fig = plot_PSV(possible_PSVs_for_this_obs(:,:,obs_slice), plot_params, title_str, clims_to_use); % single observation
+        fig = plot_PSV(possible_PSVs_for_this_obs(:,:,obs_slice), params, title_str, clims_to_use); % single observation
         saveas(fig, sprintf("%s/single obs/%s obs%s.png",folder_to_save_in, title_str, num2str(obs_slice)))
     end
     
     
-    % flattened_data = mean(possible_PSVs_for_this_obs(plot_params.enc_window_ids,:,:), 3, 'omitnan');
+    % flattened_data = mean(possible_PSVs_for_this_obs(params.enc_window_ids,:,:), 3, 'omitnan');
     % data_mean = mean(flattened_data(:));
     % data_std = std(flattened_data(:));
     % Set the color limits to be 2 standard deviations around the mean
@@ -84,15 +84,15 @@ function plot_PSVs(params, plot_params, without_image)
     
     if ~without_image
         title_str = sprintf("p%s chan%s image%s enc%s mean across trials", ...
-            num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
-            num2str(plot_params.image_id), num2str(plot_params.enc_id));
+            num2str(params.patient_id), num2str(params.chan_id), ...
+            num2str(params.image_id), num2str(params.enc_id));
     else
         title_str = sprintf("p%s chan%s WITHOUT image%s enc%s mean across trials", ...
-            num2str(plot_params.patient_id), num2str(plot_params.chan_id), ...
-            num2str(plot_params.image_id), num2str(plot_params.enc_id));
+            num2str(params.patient_id), num2str(params.chan_id), ...
+            num2str(params.image_id), num2str(params.enc_id));
     end
     mean(possible_PSVs_for_this_obs, 3, 'omitnan')
-    fig = plot_PSV(mean(possible_PSVs_for_this_obs, 3, 'omitnan'), plot_params, title_str, clims_to_use); % mean of all obs
+    fig = plot_PSV(mean(possible_PSVs_for_this_obs, 3, 'omitnan'), params, title_str, clims_to_use); % mean of all obs
     saveas(fig, sprintf("%s/mean across trials/%s.png", folder_to_save_in, title_str))
 
 end

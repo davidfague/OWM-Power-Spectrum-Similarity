@@ -1,13 +1,9 @@
-function [EMS_WI,EMS_BI] = get_and_pre_process_WI_BI(patient_id, comp_options, enc_id, image_id, chan_id, params, type, only_all3_correct)
-        if nargin < 8
-            only_all3_correct = false;
-        end
-
-        [BI, WI] = load_BT_data(patient_id, comp_options, enc_id, image_id, chan_id, params, type); % doesn't matter that it looks like type='EMS' is returned.
+function [EMS_WI,EMS_BI] = get_and_pre_process_WI_BI(params)
+        [BI, WI] = load_BT_data(params); % doesn't matter that it looks like type='EMS' is returned.
 
         % get rid of trials that were not all3 correct (only based on test
         % trials since control trials have already been filtered.)
-        if only_all3_correct
+        if params.only_all3_correct
             rows_to_keep = sum(WI.chan_test_table.encoding_correctness,2) == 3;
             WI.BT_ES = WI.BT_ES(:, :, rows_to_keep, rows_to_keep);
             BI.BT_ES = BI.BT_ES(:,:,rows_to_keep,:);

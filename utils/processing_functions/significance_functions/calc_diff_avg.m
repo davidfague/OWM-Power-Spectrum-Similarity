@@ -1,9 +1,10 @@
 function diff = calc_diff_avg(WI, BI, num_means)
-    if size(WI, 1) > 1
+    if size(WI, 1) > 1 % if temporally generalized should be size (1,1,K)
         % tic;
     
-        % Move input matrices to GPU
+        % see if the system has gpus
         try
+            % Move input matrices to GPU
             WI = gpuArray(WI);
             BI = gpuArray(BI);
             has_gpus = true;
@@ -57,15 +58,14 @@ function diff = calc_diff_avg(WI, BI, num_means)
         % Compute difference
         diff = reshape(WI_means - BI_means, t1_size, t2_size, num_means);
     
-        % Bring results back to CPU
-        % diff = gather(diff);
+        if has_gpus
+            % Bring results back to CPU
+            diff = gather(diff);
+        end
     
         % fprintf("Finished in %.2f seconds\n", toc);
     else
-        % use this if temporally generalized
-            % Move the input matrices to GPU % in this case overhead is not worth since 38 x 380 time dimension becomes 1x1
-            % WI = gpuArray(WI);
-            % BI = gpuArray(BI);
+        % use this if temporally generalized (no GPU or parallelization needed)
         
             % Dimensions of the input matrices
             num_WI = size(WI, 3);
@@ -100,9 +100,6 @@ function diff = calc_diff_avg(WI, BI, num_means)
         
             for k = 1:num_means
                 % Select the random indices for WI and BI
-                % indices_WI = random_indices_WI(k, :); % for randi, repeating
-                % indices_BI = random_indices_BI(k, :);
-        
                 indices_WI = random_indices_WI{k}; % for randperm
                 indices_BI = random_indices_BI{k};
         
@@ -123,9 +120,13 @@ function diff = calc_diff_avg(WI, BI, num_means)
                 diff(:, :, k) = reshape(WI_mean - BI_mean, size(WI, 1), size(WI, 2));
         
             end
-            % diff = gather(diff);
-            % fprintf("finished gpu diffs in %s\n", num2str(toc))
+            % fprintf("finished temporally generalized diffs in %s\n", num2str(toc))
     end
+
+    if any(isnan(diff), 'all')
+        error("diff contains nan")
+    end
+
 end
 
 

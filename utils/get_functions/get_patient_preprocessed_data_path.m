@@ -33,4 +33,6 @@ function patient_preprocessed_data_path = get_patient_preprocessed_data_path(par
         patient_preprocessed_data_path = { fullfile(params.preprocessed_data_location, sprintf('/CS%s/', num2str(patient_ID)))};
     
     end
+
+    if params.hellbender
 end

@@ -1,5 +1,7 @@
-function fig = plot_WI_BI_significant_clusters(BI,WI, significant_clusters, all_real_clusters, plot_params)
-        % if plot_params.same_n
+function fig = plot_WI_BI_significant_clusters(BI,WI, params, clusters_info)
+        significant_clusters = [clusters_info.significant_positive_clusters, clusters_info.significant_negative_clusters];
+        all_real_clusters = [clusters_info.real_positive_clusters, clusters_info.real_negative_clusters];
+        % if params.same_n
         %     BI = BI(:,:,randi(size(BI,3),size(WI,3), 1));
         % end
         fig = figure('WindowState','maximized');
@@ -26,9 +28,9 @@ function fig = plot_WI_BI_significant_clusters(BI,WI, significant_clusters, all_
         title('Significant Clusters')
 
         title_str = sprintf("%s p%s chan%s image%s enc%s\n %s", ...
-                plot_params.type, num2str(plot_params.patient_id), ... 
-                num2str(plot_params.chan_id), num2str(plot_params.image_id), ...
-                num2str(plot_params.enc_id), plot_params.anat);
+                params.type, num2str(params.patient_id), ... 
+                num2str(params.chan_id), num2str(params.image_id), ...
+                num2str(params.enc_id), params.anat);
         sgtitle(title_str);
 
         hold off;

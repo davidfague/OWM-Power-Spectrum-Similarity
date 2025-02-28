@@ -1,4 +1,10 @@
-function fig = plot_cluster_sum_distribution(all_surrogate_sums, all_real_cluster_sums, significance_threshold, final_p_this_obs)
+function fig = plot_cluster_sum_distribution(all_surrogate_sums, all_real_cluster_sums, significance_threshold, final_p_this_obs, cluster_type)
+    if isempty(all_real_cluster_sums)
+        warning("cannot plot %s cluster sum distribution because there are no clusters", cluster_type)
+        fig = [];
+        return
+    end
+
     sum_threshold = prctile(abs(all_surrogate_sums), (1-significance_threshold)*100);
  % Generate kernel density estimates for each dataset
     [density_surrogate, x_surrogate] = ksdensity(abs(all_surrogate_sums));
@@ -16,7 +22,7 @@ function fig = plot_cluster_sum_distribution(all_surrogate_sums, all_real_cluste
     xline(max(all_real_cluster_sums), 'r--', 'LineWidth',2, 'Label', sprintf('p = %s', num2str(final_p_this_obs)))
 
     % Add labels, title, and legend
-    title('Cluster sum(Tstat) Distributions');
+    title('%s Cluster sum(Tstat) Distributions', cluster_type);
     xlabel('Cluster sum(Tstat)');
     ylabel('Probability Density');
     legend({'Null Nperm=1000', 'Real', ...
