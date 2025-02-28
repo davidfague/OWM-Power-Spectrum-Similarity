@@ -1,4 +1,4 @@
-function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting)
+function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting, WI, BI)
     fprintf("processing WI vs BI for" + ...
         "   p%s session%d chan%s image%s %d-%dHz\n", ...
         num2str(params.patient_id), params.session_id, num2str(params.chan_id), ...
@@ -10,7 +10,10 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting)
     warning('on', 'MATLAB:MKDIR:DirectoryExists');
 
     % get WI, BI matrices; size: (nEtimes, nMtimes, nTrialCombinations)
-    [WI, BI] = get_and_pre_process_WI_BI(params);
+    % [WI, BI] = get_and_pre_process_WI_BI(params);
+    if isempty(WI) | isempty(BI)
+        [WI, BI] = load_WI_BI_for_channel(params);
+    end
 
     if params.clip_inf_similarities
        [WI, BI] = clip_infs_of_z_similarities(WI,BI);

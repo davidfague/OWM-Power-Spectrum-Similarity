@@ -16,15 +16,23 @@ function all_p_table = calc_WI_vs_BI_table(params, all_p_table)
     
         for image_id = 1:9
             params.image_id = image_id;
-            channel_ids_to_use = extractIntegersFromFilenames(params.patient_id, ...
-                params.comp_options, params.enc_id, image_id, params); 
+            % channel_ids_to_use = extractIntegersFromFilenames(params.patient_id, ...
+            %     params.comp_options, params.enc_id, image_id, params); 
+
+            [WI_channel_map] = load_BT_channel_map(params, 'WI');
+            [BI_channel_map] = load_BT_channel_map(params, 'BI');
+            channel_ids_to_use = get_channels_from_both_channel_maps(WI_channel_map, BI_channel_map);
     
             for chan_idx = 1:length(channel_ids_to_use)
                 params.chan_id = channel_ids_to_use(chan_idx);
                 params.anat = string(anat_labels.labelsanatbkedit.anatmacro1(chan_id));
+
+                WI = WI_channel_map(params.chan_id).matrix;
+                BI = BI_channel_map(params.chan_id).matrix;
+                [EMS_WI, EMS_BI] = pre_process_WI_BI(params, WI, BI);
+                clear WI BI
         
-        
-                [final_p, ~, ~] = WI_vs_BI(params, false);
+                [final_p, ~, ~] = WI_vs_BI(params, false, EMS_WI, EMS_BI);
 
                 % Create the row of the table
                 result_table = table(params.patient_id, ...

@@ -132,6 +132,7 @@ for band_idx = 1:length(params.bands)
     band.name = params.bands{band_idx};
     band.range = params.freq_band_map(band.name);
     band.frequencies = get_frequencies(params.num_frequencies, band.range, params.freq_spacing);
+    band.num_frequencies = params.num_frequencies;
     params.freq_band_map(band.name) = band;
 end
 % params.num_PSV_frequencies = length(params.PSV_freq_band);
