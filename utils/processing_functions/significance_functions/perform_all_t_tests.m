@@ -1,6 +1,11 @@
 function t_test_info = perform_all_t_tests(WI, BI, params)
-    file_to_save = sprintf("%s/significant_cluster_data.mat", params.WI_BI_folder_to_save_in);
-    run_t_test = ((~exist(file_to_save, 'file')) && any(strcmp('t_test_info', who('-file', 'file_to_save.mat')))) || ~params.skip_existing;
+    file_to_save = sprintf('%s/significant_cluster_data.mat', params.WI_BI_folder_to_save_in);
+    file_exists = exist(file_to_save, 'file');
+    if ~file_exists
+        run_t_test = true;
+    else
+        run_t_test = ~any(strcmp('t_test_info', who('-file', file_to_save))) || ~params.skip_existing;
+    end
     if run_t_test
         % calculate real WI-BI differences
         t_test_info = struct();
