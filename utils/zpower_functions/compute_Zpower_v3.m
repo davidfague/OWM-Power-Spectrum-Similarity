@@ -7,7 +7,7 @@ function [Zpower] = compute_Zpower_v3(data, params)
     npts = length(data);
     
     % Define parameters for time-frequency analysis
-    Fre = params.PSV_freq_band; % Fre = 1:100; % Frequency range from 1 to 100 Hz
+    Fre = params.band_to_process.frequencies; % Fre = 1:100; % Frequency range from 1 to 100 Hz
     Fsample = params.Fsample; % Fsample = 1000; % Sampling frequency in Hz
     wavenum = params.wavenum; % wavenum = 6; % Number of cycles in the wavelet
     ntrials = size(data,3);

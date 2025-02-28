@@ -15,9 +15,9 @@ function PS_file = get_PS_file(params, patient_ID, use_matfile) % use_matfile re
     % Construct the file path
     % file_path = fullfile(output_folder, sprintf('%s/%s.mat', num2str(patient_ID), num2str(patient_ID)));
     if params.k12wm
-        file_path = fullfile(params.output_folder, sprintf('%s/PSVs%s.mat', num2str(patient_ID), num2str(params.session_id)));
+        file_path = fullfile(params.output_folder, sprintf('%s/PSVs_%s_%s.mat', num2str(patient_ID), params.freq_band_to_proces, num2str(params.session_id)));
     else
-        file_path = fullfile(params.output_folder, sprintf('%s/PSVs.mat', num2str(patient_ID)));
+        file_path = fullfile(params.output_folder, sprintf('%s/PSVs_%s.mat', num2str(patient_ID), params.freq_band_to_process));
     end
     
     % return matfile or path
