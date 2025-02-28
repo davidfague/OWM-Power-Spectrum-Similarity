@@ -6,7 +6,7 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting)
     tic
 
     warning('off', 'MATLAB:MKDIR:DirectoryExists');
-    mkdir(params.WI_BI_folder_to_save_in);
+    mkdir(fullfile(params.WI_BI_folder_to_save_in));
     warning('on', 'MATLAB:MKDIR:DirectoryExists');
 
     % get WI, BI matrices; size: (nEtimes, nMtimes, nTrialCombinations)

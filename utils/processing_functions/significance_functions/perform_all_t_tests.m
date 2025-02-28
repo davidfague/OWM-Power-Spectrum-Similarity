@@ -1,11 +1,13 @@
 function t_test_info = perform_all_t_tests(WI, BI, params)
-    file_to_save = sprintf('%s/significant_cluster_data.mat', params.WI_BI_folder_to_save_in);
+    file_to_save = fullfile(sprintf('%s/significant_cluster_data.mat', params.WI_BI_folder_to_save_in));
+
     file_exists = exist(file_to_save, 'file');
     if ~file_exists
         run_t_test = true;
     else
         run_t_test = ~any(strcmp('t_test_info', who('-file', file_to_save))) || ~params.skip_existing;
     end
+
     if run_t_test
         % calculate real WI-BI differences
         t_test_info = struct();
@@ -28,7 +30,7 @@ function t_test_info = perform_all_t_tests(WI, BI, params)
         fprintf("    calculating surrogate differences and t-tests\n")
         [t_test_info.surrogate_t_values, t_test_info.surrogate_p_values, t_test_info.surrogate_diffs] = calc_surrogate(WI, BI, 1000, params.average_diff, params.mean_out_time_dimensions);
 
-        save(sprintf("%s/significant_cluster_data.mat", params.WI_BI_folder_to_save_in), 't_test_info', '-append')
+        save(fullfile(params.WI_BI_folder_to_save_in, 'significant_cluster_data.mat'), 't_test_info')
     else
         fprintf("    skipping t_test calculation\n    loading %s", file_to_save)
         load(file_to_save, 't_test_info')
