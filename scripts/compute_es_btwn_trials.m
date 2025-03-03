@@ -12,42 +12,43 @@ clear all
 close all
 
 %% parameters
-es_freq_bands = {[8:12]};
+% es_freq_bands = {[8:12]};
 
 custom_params = struct();
 custom_params.hellbender = false;
-custom_params.output_folder_name = 'middle_fixation_baseline';
+custom_params.output_folder_name = 'higher_freq_res_and_channel_maps';
 % custom_params.patient_IDs = [201907, 201908, 201910, 201915];
-
+params = get_parameters(custom_params); 
 target_enc_ids = 1; 
 target_image_ids = 1:9;
 
-for k12wm = [true, false]
-    custom_params.k12wm = k12wm;
-    for i = 1:length(es_freq_bands)
-        custom_params.ES_freq_band = es_freq_bands{i}
 
-        params = get_parameters(custom_params); 
+for k12wm = false%[true, false]
+    custom_params.k12wm = k12wm;
+    for freq_band_idx = 1%:length(params.bands)
+        params.band_name_to_process = params.bands{freq_band_idx};
+        params.band_to_process = params.freq_band_map(params.band_name_to_process);
+        fprintf("Processing freg_band %s\n", num2str(params.band_name_to_process))
         
         %% main loop
         
         for idx = 1:length(params.patient_IDs)
-            patient_ID = params.patient_IDs(idx);
+            params.patient_ID = params.patient_IDs(idx);
             if params.k12wm
-                session_ids = get_available_session_ids(params, patient_ID);
+                session_ids = get_available_session_ids(params, params.patient_ID);
             else
                 session_ids = 1;
             end
         
             for session_idx = 1:length(session_ids)
                 params.session_id = session_idx;
-                PS_file = get_PS_file(params, patient_ID, false);
+                PS_file = get_PS_file(params, params.patient_ID, false);
                 load(PS_file)
         
                 % filter by frequency
-                all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,params.ES_freq_band,:);
-                params.freq_min = min(params.ES_freq_band);
-                params.freq_max = max(params.ES_freq_band);
+                all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,1:params.band_to_process.num_frequencies,:);
+                params.freq_min = min(params.band_to_process.range);
+                params.freq_max = max(params.band_to_process.range);
             
                 % % % compute correlations
                 for btwn_trial_type = {'EMS'}%EES
@@ -57,15 +58,15 @@ for k12wm = [true, false]
                             for within_item = [true, false] % false is between items
                                 params.within_item = within_item;
         
-                                fprintf("computing patient%d, enc%d, image%d %d-%dHz\n", patient_ID, target_enc_id, target_image_id, params.freq_min, params.freq_max)
+                                fprintf("computing patient%d, enc%d, image%d %d-%dHz\n", params.patient_ID, target_enc_id, target_image_id, params.freq_min, params.freq_max)
         
-                                [all_channels_save_file, params] = compute_all_between_trial_similarities(patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
+                                [all_channels_save_file, params] = compute_all_between_trial_similarities(params.patient_ID, target_enc_id, target_image_id, params, label_table, all_windowed_mean_PS_vectors);
                             end
                         end
                     end
                 end
             
-                write_current_script_to_destination(fullfile(params.output_folder, num2str(patient_ID)), strcat(mfilename('fullpath'), '.m'));
+                write_current_script_to_destination(fullfile(params.output_folder, num2str(params.patient_ID)), strcat(mfilename('fullpath'), '.m'));
             
             end
         end
@@ -126,12 +127,12 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
     % Set up save folder
     if params.within_item % the following could use params.output_folder instead of strrep(PS.source, PS_file, new)
         save_folder = fullfile(sprintf('%s/%d/session%d/corr BT WI/%s/%s/enc%d_image%d', ...
-            params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, ...
+            params.output_folder, params.patient_ID, params.session_id, params.btwn_trial_type, ...
             sprintf("%d-%d",params.freq_min,params.freq_max), ...
             target_enc_ids, target_image_ids));
     else
         save_folder = fullfile(sprintf('%s/%d/session%d/corr BT BI/%s/%s/enc%d_image%d', ...
-            params.output_folder, patient_ID, params.session_id, params.btwn_trial_type, ...
+            params.output_folder, params.patient_ID, params.session_id, params.btwn_trial_type, ...
             sprintf("%d-%d",params.freq_min,params.freq_max), ...
             target_enc_ids, target_image_ids));
     end
@@ -163,14 +164,14 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
     save_file = fullfile(save_folder, sprintf('all_channels_bt_es.mat'));
 
     for chan_idx = 1:length(unique_channel_IDs)
-        chan_id = unique_channel_IDs(chan_idx);
+        params.chan_id = unique_channel_IDs(chan_idx);
         % save_file = fullfile(save_folder, sprintf('BT_%d.mat', chan_id));
 
         % Filter data for the current channel ID
-        chan_test_rows = filter_by_channel_id(item_cor_table, chan_id);
+        chan_test_rows = filter_by_channel_id(item_cor_table, params.chan_id);
         [chan_test_table, chan_test_PSVs] = filter_table_PSVs(item_cor_table, item_cor_PSVs, chan_test_rows);
 
-        chan_ctrl_rows = filter_by_channel_id(control_table, chan_id);
+        chan_ctrl_rows = filter_by_channel_id(control_table, params.chan_id);
         [chan_ctrl_table, chan_ctrl_PSVs] = filter_table_PSVs(control_table, control_PSVs, chan_ctrl_rows);
 
         num_test_trials = size(chan_test_PSVs, 3);
@@ -178,12 +179,12 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
 
         if num_test_trials * num_ctrl_trials < 25
             % skipping because not enough combinations
-            warning("skipping channel %d because not enough trial pairs: %d < 25",chan_id, num_test_trials * num_ctrl_trials)
+            warning("skipping channel %d because not enough trial pairs: %d < 25",params.chan_id, num_test_trials * num_ctrl_trials)
             continue
         else
-            fprintf("Computing similarity for %d test trials x %d control trials for chan %d\n", num_test_trials, num_ctrl_trials, chan_id);
+            fprintf("Computing similarity for %d test trials x %d control trials for chan %d\n", num_test_trials, num_ctrl_trials, params.chan_id);
             if params.within_item
-                params.processed_channels = [params.processed_channels, chan_id]; % keep track of channels that meet this criterion for WI so that we can only process the same for BI
+                params.processed_channels = [params.processed_channels, params.chan_id]; % keep track of channels that meet this criterion for WI so that we can only process the same for BI
             end
         end
 
@@ -223,10 +224,10 @@ function [all_channels_save_file, params] = compute_all_between_trial_similariti
         bt_es.matrix = bt_es_matrix;
         bt_es.chan_test_table = chan_test_table;
         bt_es.chan_ctrl_table = chan_ctrl_table;
-        channels_to_bt_es(int32(chan_id)) = bt_es;
+        channels_to_bt_es(int32(params.chan_id)) = bt_es;
         
     end
-    save(save_file, "channels_to_bt_es");
+    save(save_file, "channels_to_bt_es", "-v7.3");
 end
 
 function rows = filter_rows(label_table, target_image_ids, target_enc_ids)

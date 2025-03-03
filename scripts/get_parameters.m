@@ -49,7 +49,7 @@ params.num_wrkrs_local = 2;
 params.init_par_pool = false;  % enable to run parfor
 params.output_folder_name = 'allpatients gammamod allregions allitem allenc baseline across trials';
 params.processed_data_dir = '../processed_data/';
-params.ES_freq_band = 1:40;
+% params.ES_freq_band = 1:40;
 
 %% Override first set of defaults with any custom parameters
 
@@ -121,7 +121,7 @@ params.window_IDs_to_use = find_valid_window_IDs_from_ntimes_logical_array(param
 [params.fixation_win_IDs, params.enc1_win_IDs, params.enc2_win_IDs, params.enc3_win_IDs, params.maint_win_IDs, params.non_recall_win_IDs, params.all_win_IDs] = get_window_IDs(params);
 
 % for computing power
-params.PSV_freq_band = 1:100; % previous implementation
+% params.PSV_freq_band = 1:100; % previous implementation
 params.freq_spacing = "log"; % spacing between points in each band
 params.num_frequencies = 40; % for each band
 params.freq_band_map = containers.Map({'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma'}, ...
@@ -152,8 +152,8 @@ params.use_gamma_mod_chans = [true];%, false]; % [true, false] means all channel
 % images_to_process = {}; %P046
 
 % for ES
-params.freq_min = min(params.ES_freq_band);
-params.freq_max = max(params.ES_freq_band);
+% params.freq_min = min(params.ES_freq_band);
+% params.freq_max = max(params.ES_freq_band);
 
 % between trials similarity
 params.btwn_trial_type = 'EMS'; % default

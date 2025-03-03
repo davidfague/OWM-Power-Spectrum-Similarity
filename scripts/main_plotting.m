@@ -11,18 +11,19 @@ params = get_parameters(custom_params);
 clear script_specs custom_params
 
 %%
-params.patient_id = 201910;
-params.chan_id = 66;
-params.image_id = 6;
+params.patient_id = 201901;
+params.chan_id = 3;
+params.image_id = 1;
 params.enc_window_ids = params.enc1_win_IDs; % change with enc_id
 params.enc_id = 1;
 params.session_id = 1;
+% params.band_to_process
 
-params.freq_min = 1;
-params.freq_max = 40;
+% params.freq_min = 1;
+% params.freq_max = 40;
 
 % for PSVs
-params.frequencies_to_use = 1:40; % for plotting PSVs only % empty for whatever the data is 
+% params.frequencies_to_use = 1:40; % for plotting PSVs only % empty for whatever the data is 
 
 % for WI vs BI
 params.type = 'EMS'; % for plotting WI_vs_BI only
@@ -32,8 +33,13 @@ params.same_n = true; % only affects plot_similarity_means_heatmaps
 
 params.only_all3_correct = true; % filters test trials (with item)
 
+band_idx = 1;%:length(params.bands)
+params.band_to_process = params.freq_band_map(params.bands{band_idx});
+params.freq_min = min(params.band_to_process.range);
+params.freq_max = max(params.band_to_process.range);
+
 % es_freq_bands = {[1:8], [8:20], [20:40], [1:40]};
-params.es_freq_bands = {[1:40]};%{[4:8],[8:12],[12:30], [30:70]};
+% params.es_freq_bands = {[1:40]};%{[4:8],[8:12],[12:30], [30:70]};
 % es_freq_bands = {[1:40]};
 % look at power spectra to determine bands
 % 4:8
@@ -118,7 +124,7 @@ clearvars patient_ids_to_use table_all_patients original_mean_out_time
     % for ave_diff = [true, false]
     
         % params.average_diff = ave_diff;
-    WI_vs_BI(params, true);
+    WI_vs_BI(params, true, [], []);
     close all
 % end
 
