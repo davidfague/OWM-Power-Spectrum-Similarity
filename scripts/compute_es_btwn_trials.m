@@ -12,23 +12,28 @@ clear all
 close all
 
 %% parameters
-% es_freq_bands = {[8:12]};
 
-custom_params = struct();
-custom_params.hellbender = false;
-custom_params.output_folder_name = 'higher_freq_res_and_channel_maps';
-% custom_params.patient_IDs = [201907, 201908, 201910, 201915];
-params = get_parameters(custom_params); 
+script_specs = struct();
+
+custom_params = get_custom_params(script_specs);
+
+params = get_parameters(custom_params);
+
 target_enc_ids = 1; 
 target_image_ids = 1:9;
 
-
 for k12wm = false%[true, false]
     custom_params.k12wm = k12wm;
-    for freq_band_idx = 1%:length(params.bands)
+    params = get_parameters(custom_params); % repeat any necessary k12wm related logic (pathing, patient_IDs,...) % clear variables that are reassigned later
+    for freq_band_idx = 1:length(params.bands)
         params.band_name_to_process = params.bands{freq_band_idx};
         params.band_to_process = params.freq_band_map(params.band_name_to_process);
         fprintf("Processing freg_band %s\n", num2str(params.band_name_to_process))
+        params.freq_min = min(params.band_to_process.range);
+        params.freq_max = max(params.band_to_process.range);
+
+        % params.within_item = false; % computes control as either within item or between items
+        % params.btwn_trial_type = 'EMS'; % default should be 'EMS'
         
         %% main loop
         
@@ -47,8 +52,6 @@ for k12wm = false%[true, false]
         
                 % filter by frequency
                 all_windowed_mean_PS_vectors = all_windowed_mean_PS_vectors(:,1:params.band_to_process.num_frequencies,:);
-                params.freq_min = min(params.band_to_process.range);
-                params.freq_max = max(params.band_to_process.range);
             
                 % % % compute correlations
                 for btwn_trial_type = {'EMS'}%EES
