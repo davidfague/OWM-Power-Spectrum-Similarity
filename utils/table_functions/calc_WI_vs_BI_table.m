@@ -25,10 +25,10 @@ function all_p_table = calc_WI_vs_BI_table(params, all_p_table)
     
             for chan_idx = 1:length(channel_ids_to_use)
                 params.chan_id = channel_ids_to_use(chan_idx);
-                params.anat = string(anat_labels.labelsanatbkedit.anatmacro1(chan_id));
+                params.anat = string(anat_labels.labelsanatbkedit.anatmacro1(params.chan_id));
 
-                WI = WI_channel_map(params.chan_id).matrix;
-                BI = BI_channel_map(params.chan_id).matrix;
+                WI = WI_channel_map(params.chan_id);
+                BI = BI_channel_map(params.chan_id);
                 [EMS_WI, EMS_BI] = pre_process_WI_BI(params, WI, BI);
                 clear WI BI
         

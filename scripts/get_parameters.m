@@ -75,7 +75,7 @@ end
 
 if params.hellbender
     params.patient_IDs = [201901, 201902, 201903, 201905, 201906, 201907, 201908, 201910, 201915];
-    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name);
+    params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/RSA/PSS/processed_data/', params.output_folder_name);
     params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/');
     params.local_directory = fullfile('/home/drfrbc/Power Spectrum Similarity/');
 else
@@ -89,7 +89,7 @@ if params.k12wm
     params.time = 1:7001;
     params.patient_IDs = [004, 005, 006, 007, 008, 009, 010];
     if params.hellbender
-        params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/OWM Utah Data/RSA/PSS/pprocessed_data/', params.output_folder_name, '/k12wm/');
+        params.output_folder = fullfile('/cluster/VAST/bkybg-lab/Data/RSA/PSS/processed_data/', params.output_folder_name, '/k12wm/');
         params.preprocessed_data_location = fullfile('/cluster/VAST/bkybg-lab/Data/k12wm/');
     else
         params.output_folder = fullfile(params.processed_data_dir, params.output_folder_name, '\k12wm\');

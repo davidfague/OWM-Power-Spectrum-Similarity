@@ -3,50 +3,34 @@
 script_specs = struct();
 script_specs.clip_inf_similarities = true;
 script_specs.skip_existing = false;
+script_specs.only_all3_correct = true; % filters test trials (with item) (should be already filtered in compute_es_btwn_trials.m)
+
+%specific observations (if there is a loop then probably overwritten)
+script_specs.patient_id = 201901;
+script_specs.chan_id = 3;
+script_specs.image_id = 1;
+script_specs.enc_window_ids = params.enc1_win_IDs; % change with enc_id
+script_specs.enc_id = 1;
+script_specs.session_id = 1;
+
+% for WI vs BI
+script_specs.type = 'EMS'; % for plotting WI_vs_BI only
+script_specs.mean_out_time_dimensions = true;
+script_specs.average_diff = true;
+script_specs.same_n = true; % only affects plot_similarity_means_heatmaps
 
 custom_params = get_custom_params(script_specs); % get other defaults like hellbender, ouput folder
 
+
 params = get_parameters(custom_params);
 
-clear script_specs custom_params
-
-%%
-params.patient_id = 201901;
-params.chan_id = 3;
-params.image_id = 1;
-params.enc_window_ids = params.enc1_win_IDs; % change with enc_id
-params.enc_id = 1;
-params.session_id = 1;
-% params.band_to_process
-
-% params.freq_min = 1;
-% params.freq_max = 40;
-
-% for PSVs
-% params.frequencies_to_use = 1:40; % for plotting PSVs only % empty for whatever the data is 
-
-% for WI vs BI
-params.type = 'EMS'; % for plotting WI_vs_BI only
-params.mean_out_time_dimensions = true;
-params.average_diff = true;
-params.same_n = true; % only affects plot_similarity_means_heatmaps
-
-params.only_all3_correct = true; % filters test trials (with item)
-
+% specific band
 band_idx = 1;%:length(params.bands)
 params.band_to_process = params.freq_band_map(params.bands{band_idx});
 params.freq_min = min(params.band_to_process.range);
 params.freq_max = max(params.band_to_process.range);
 
-% es_freq_bands = {[1:8], [8:20], [20:40], [1:40]};
-% params.es_freq_bands = {[1:40]};%{[4:8],[8:12],[12:30], [30:70]};
-% es_freq_bands = {[1:40]};
-% look at power spectra to determine bands
-% 4:8
-% 8:12-14
-% 15:30
-% 30:70
-% 70:140
+clear script_specs custom_params
 
 %% params that will need updated if their input is changed below
 % might need to put the above params in script_specs and then put this
@@ -71,11 +55,12 @@ params.recompute_table = true;
 if params.recompute_table
     original_mean_out_time = params.mean_out_time_dimensions;
     params.mean_out_time_dimensions = true;
-    for freqs_idx = 1:length(params.es_freq_bands)
+    for freqs_idx = 1:length(params.bands)
         all_p_table = table();
-        params.ES_freq_band = params.es_freq_bands{freqs_idx};
-        params.freq_min = min(params.ES_freq_band);
-        params.freq_max = max(params.ES_freq_band);
+        params.band = params.bands{freqs_idx};
+        params.band_to_process = params.freq_band_map(params.band);
+        params.freq_min = min(params.band_to_process.range);
+        params.freq_max = max(params.band_to_process.range);
 
         for pat_idx = 1:length(params.patient_IDs)
             params.patient_id = params.patient_IDs(pat_idx);
@@ -88,7 +73,7 @@ if params.recompute_table
             suffix = 'utah';
         end
 
-        save_file = sprintf('summary_p_tables_midbase_%d-%dhz_%s_clip_infs.mat', params.freq_min, params.freq_max, suffix);
+        save_file = sprintf('summary_p_tables_highres40_relabel_%d-%dhz_%s_clip_infs.mat', params.freq_min, params.freq_max, suffix);
         fprintf("saving %s", save_file)
 
         save(save_file, 'all_p_table')

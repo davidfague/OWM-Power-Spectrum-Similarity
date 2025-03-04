@@ -10,24 +10,26 @@
 
 %% Setup Paths
 
-custom_params = struct();
-custom_params.k12wm = false;
+script_specs = struct();
+script_specs.baseline_T_lims = [-0.75, -0.25];
+% script_specs.band_name_to_process = '1to40';
+
+custom_params = get_custom_params(script_specs);
+
+% custom_params.k12wm = false;
 % custom_params.patient_IDs = [ 005, 006, 007, 008, 009, 010];
-custom_params.baseline_T_lims = [-0.75, -0.25];
-custom_params.hellbender = false;
-custom_params.output_folder_name = 'higher_freq_res_and_channel_maps';
 
 params = get_parameters(custom_params);
 
 use_parallel = false; % not implemented
 %% loop through patients
 
-for freq_band_idx = 1%:length(params.bands)
+for freq_band_idx = 1:length(params.bands)
     params.band_name_to_process = params.bands{freq_band_idx};
     params.band_to_process = params.freq_band_map(params.band_name_to_process);
     fprintf("Processing freg_band %s\n", num2str(params.band_name_to_process))
 
-    for idx = 1%:length(params.patient_IDs)
+    for idx = 1:length(params.patient_IDs)
         params.patient_ID = params.patient_IDs(idx);
         fprintf("Processing patient %s\n", num2str(params.patient_ID))
     
