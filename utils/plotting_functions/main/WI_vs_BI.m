@@ -5,6 +5,22 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting, WI, 
         num2str(params.image_id), params.freq_min, params.freq_max);
     tic
 
+    if ~isfield(params, 'WI_BI_folder_to_save_in')
+        params.patient_preprocessed_data_paths = get_patient_preprocessed_data_path(params, params.patient_id);
+        params.patient_preprocessed_data_path = params.patient_preprocessed_data_paths{params.session_id};
+        
+        params.WI_BI_folder_to_save_in = fullfile(sprintf("results/WI vs BI/p%s chan%s image%s enc%s sess%d", ...
+                    num2str(params.patient_id), num2str(params.chan_id), ...
+                    num2str(params.image_id), num2str(params.enc_id), params.session_id));
+        if ~isfield(params, 'anat')       
+            params.anat_labels = get_anat_labels(params.patient_preprocessed_data_path, params);
+            
+            % params.image_labels = load(fullfile(params.patient_preprocessed_data_path, "OWM_trialinfo.mat"), 'C'); % if wanted
+            
+            params.anat = string(params.anat_labels.labelsanatbkedit.anatmacro1(params.chan_id));
+        end
+    end
+
     warning('off', 'MATLAB:MKDIR:DirectoryExists');
     mkdir(fullfile(params.WI_BI_folder_to_save_in));
     warning('on', 'MATLAB:MKDIR:DirectoryExists');
