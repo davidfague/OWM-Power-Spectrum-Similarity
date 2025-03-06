@@ -109,10 +109,11 @@ params.stim3_start = 2000; params.stim3_end = 2500; % stim 3 time window
 params.maintenance_duration = 4000;
 
 % windows for computing PSVs
-params.window_size = 200;
+params.window_size = 200; % ms
+params.window_step_size = 10; % ms
 wt = length(params.time); % time from preprecess data values
-params.num_windows = floor((wt - params.window_size) / 10) + 1; % Correct calculation for number of windows
-params.window_start_times = params.time(1:10:(params.num_windows - 1) * 10 + 1); % Start times
+params.num_windows = floor((wt - params.window_size) / params.window_step_size) + 1; % Correct calculation for number of windows
+params.window_start_times = params.time(1:params.window_step_size:(params.num_windows - 1) * params.window_step_size + 1); % Start times
 params.window_end_times = params.time(params.window_start_times + params.window_size-1);             % End times
 params.window_IDs_to_use = true(size(params.time)); % Choose all times initially for PSVs
 params.window_IDs_to_use = find_valid_window_IDs_from_ntimes_logical_array(params.window_IDs_to_use, params.window_start_times, params.window_end_times); % Filter valid IDs
