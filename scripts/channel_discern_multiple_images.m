@@ -87,4 +87,17 @@ end
 % 5. Finally, filter the table.
 many_sig_images_by_chan_table = num_sig_images_by_chan_table(keepFlag, :);
 
-save(table_to_load, "many_sig_images_by_chan_table", "-append")
+% get rid of rows that have anat = "Unknown", "Right Cerebral White Matter"
+% "Resection cavity" "Left Cerebral White Matter"
+stringsToRemove = {'Unknown', 'Right Cerebral White Matter', 'Resection cavity', 'Left Cerebral White Matter'};
+rowsToRemove = ismember(many_sig_images_by_chan_table.anat, stringsToRemove);
+many_sig_images_by_chan_table(rowsToRemove, :) = [];
+
+% fix patient ID
+many_sig_images_by_chan_table.patientID = double(erase(string(many_sig_images_by_chan_table.patientID), "p"));
+
+% back track and find the significant images for the outstanding channels
+rows_to_keep = ismember(significant_table.patient_channel_str, many_sig_images_by_chan_table.patient_channel_str);
+outstanding_obs_table = significant_table(rows_to_keep,:);
+
+save(table_to_load, "many_sig_images_by_chan_table", "outstanding_obs_table", "-append")
