@@ -68,6 +68,10 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting, WI, 
        
     % % plot t_values
     % fig = plot_t_values(real_value, null_values);
+    if plotting && ~params.without_precompute_diff
+        fig = plot_differences(t_test_info, params);
+        saveas(fig, sprintf("%s/WI_minus_BI.fig", params.WI_BI_folder_to_save_in))
+    end
 
     if params.mean_out_time_dimensions
         if t_test_info.real_t_values == 0 || isnan(t_test_info.real_t_values)
