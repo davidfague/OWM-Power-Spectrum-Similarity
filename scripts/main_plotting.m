@@ -9,7 +9,6 @@ script_specs.only_all3_correct = true; % filters test trials (with item) (should
 script_specs.patient_id = 201901;
 script_specs.chan_id = 3;
 script_specs.image_id = 1;
-script_specs.enc_window_ids = params.enc1_win_IDs; % change with enc_id
 script_specs.enc_id = 1;
 script_specs.session_id = 1;
 
@@ -29,6 +28,8 @@ band_idx = 1;%:length(params.bands)
 params.band_to_process = params.freq_band_map(params.bands{band_idx});
 params.freq_min = min(params.band_to_process.range);
 params.freq_max = max(params.band_to_process.range);
+
+params.enc_window_ids = params.enc1_win_IDs; % change with enc_id
 
 clear script_specs custom_params
 
