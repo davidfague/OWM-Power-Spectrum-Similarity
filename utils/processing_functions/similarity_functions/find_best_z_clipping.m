@@ -15,28 +15,65 @@ function best_z = find_best_z_clipping(WI, BI)
     % best_z: the z-value that is just outside the finite values in WI and BI.
     
     % Start with rho = 0.999 (i.e., a very high correlation)
-    initial_rho = 0.999;
+    initial_rho = 0.9999;
     rho = initial_rho;
     % Compute its Fisher Z-transform
     z = 0.5 * log((1 + rho) / (1 - rho));
+    finite_BI = BI(~isinf(BI));
+    finite_WI = WI(~isinf(WI));
+    maxim = max([finite_BI(:); finite_WI(:)]);
+    minum = min([finite_BI(:); finite_WI(:)]);
+    clear finite_BI finite_WI
     
     % Continue increasing rho (by appending a '9') until the condition is met:
     % All finite values in both BI and WI must be within (-z, z)
-    while ~( max(BI(~isinf(BI))) < z && max(WI(~isinf(WI))) < z && ...
-             min(WI(~isinf(WI))) > -z && min(BI(~isinf(BI))) > -z )
+    while ~( maxim < z && minum > -z)
          
          % Append a '9' to the end of rho's string representation
-         rho_str = num2str(rho);
-         rho_str = [rho_str '9'];
-         fprintf("trying rho %s\n", rho_str)
-         rho = str2double(rho_str);
+         % rho_str = num2str(rho);
+                      % Convert rho to a string with high precision
+         % rho_str = sprintf('%.15f', rho);
+         % rho_str = [rho_str '9'];
+         % rho = str2double(rho_str);
 
-         if rho == 1
+        % Convert rho to a string with 16 decimal places.
+        rho_str = sprintf('%.16f', rho);
+        fprintf("trying rho %s\n", rho_str)
+        
+        % Locate the decimal point.
+        dot_index = strfind(rho_str, '.');
+        if isempty(dot_index)
+            error('No decimal point found in the formatted number.');
+        end
+        
+        % Extract the fractional part (digits after the decimal point).
+        fracPart = rho_str(dot_index+1:end);
+        
+        % Find the first occurrence of '0' in the fractional part.
+        zero_pos = strfind(fracPart, '0');
+        
+        % If no zero is found, theres nothing more to replace.
+        if isempty(zero_pos)
+            fprintf("No more zeros to replace. Final rho: %.16f\n", rho);
+            break;
+        end
+        
+        % Replace the first 0 with a 9.
+        fracPart(zero_pos(1)) = '9';
+        
+        % Reassemble the string: keep the integer part (and the decimal point) and add the modified fraction.
+        new_rho_str = [rho_str(1:dot_index) fracPart];
+        rho = str2double(new_rho_str);
+
+         if rho == 1 || isnan(rho)
              error("finding best z did not work using str2double method")
          end
          
          % Update z according to the Fisher Z-transform
          z = 0.5 * log((1 + rho) / (1 - rho));
+         if isnan(z)
+             error("finding best z did not work using str2double method")
+         end
     end
     
     % Return the best z value found
