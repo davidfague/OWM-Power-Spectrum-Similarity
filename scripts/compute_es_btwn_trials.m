@@ -59,8 +59,8 @@ for k12wm = false%[true, false]
                 % % % compute correlations
                 for btwn_trial_type = {'EMS'}%EES
                     params.btwn_trial_type = btwn_trial_type{1};
-                    for target_enc_id = target_enc_ids%:3 % can be 1:3W % stim locations, stim 1 vs stim 2 versus stim 3
-                        for target_image_id = target_image_ids%[1,3] % can be 1:9
+                    for target_enc_id = params.target_enc_ids%:3 % can be 1:3W % stim locations, stim 1 vs stim 2 versus stim 3
+                        for target_image_id = params.target_image_ids%[1,3] % can be 1:9
                             for within_item = [true, false] % false is between items
                                 params.within_item = within_item;
         
