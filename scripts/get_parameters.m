@@ -124,8 +124,8 @@ params.window_IDs_to_use = find_valid_window_IDs_from_ntimes_logical_array(param
 % params.PSV_freq_band = 1:100; % previous implementation
 params.freq_spacing = "log"; % spacing between points in each band
 params.num_frequencies = 40; % for each band
-params.freq_band_map = containers.Map({'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma'}, ...
-                                      {[1,4], [4,8], [8,12], [12,30], [30,70]});
+params.freq_band_map = containers.Map({'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma', '1-40'}, ...
+                                      {[1,4], [4,8], [8,12], [12,30], [30,70], [1,40]});
 params.bands = keys(params.freq_band_map);
 for band_idx = 1:length(params.bands)
     band = struct();
