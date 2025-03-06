@@ -14,17 +14,20 @@ close all
 %% parameters
 
 script_specs = struct();
+script_specs.target_enc_ids = 1; 
+script_specs.target_image_ids = 1:9;
+script_specs.patient_IDs =[201901, 201902, 201903, 201905, 201906];%[201907, 201908, 201910, 201915];
+script_specs.bands = {'Theta', 'Gamma', '1-40'};
 
 custom_params = get_custom_params(script_specs);
 
 params = get_parameters(custom_params);
 
-target_enc_ids = 1; 
-target_image_ids = 1:9;
-
 for k12wm = false%[true, false]
     custom_params.k12wm = k12wm;
     params = get_parameters(custom_params); % repeat any necessary k12wm related logic (pathing, patient_IDs,...) % clear variables that are reassigned later
+    % params.bands = flip(params.bands); % if you want to speed up you can
+    % create a copy and flip the order.
     for freq_band_idx = 1:length(params.bands)
         params.band_name_to_process = params.bands{freq_band_idx};
         params.band_to_process = params.freq_band_map(params.band_name_to_process);
