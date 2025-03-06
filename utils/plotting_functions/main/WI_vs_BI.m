@@ -48,6 +48,14 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting, WI, 
         plot_EMS(WI, BI, params, params.WI_BI_folder_to_save_in)
     end
 
+    if plotting
+        title_prefix = sprintf("p%s session%d chan%s image%s %d-%dHz\n", ...
+        num2str(params.patient_id), params.session_id, num2str(params.chan_id), ...
+        num2str(params.image_id), params.freq_min, params.freq_max);
+        fig = plot_fft_WI_vs_BI(WI,BI, false, title_prefix, params);
+        saveas(fig,sprintf("%s/FFTs.png", params.WI_BI_folder_to_save_in))
+    end
+
     %% WI vs BI
     % temporal generalization ( mean out time dimensions
     if params.mean_out_time_dimensions
