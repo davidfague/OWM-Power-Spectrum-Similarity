@@ -29,6 +29,13 @@ function [final_p, t_test_info, clusters_info] = WI_vs_BI(params, plotting, WI, 
     % [WI, BI] = get_and_pre_process_WI_BI(params);
     if isempty(WI) | isempty(BI)
         [WI, BI] = load_WI_BI_for_channel(params);
+        if isempty(WI) | isempty(BI)
+            warning('Failed to load WI_BI for %s', params.WI_BI_folder_to_save_in)
+            final_p = nan;
+            t_test_info = [];
+            clusters_info = [];
+            return
+        end
     end
 
     if params.clip_inf_similarities

@@ -27,4 +27,8 @@ function [channel_map] = load_BT_channel_map(params, type_to_load)
         error("type_to_load %s is NotImplemented for function load_BT_channel_maps")
     end
     channel_map = channel_map.channels_to_bt_es;
+    if isempty(keys(channel_map))
+        warning("channel_map is empty. returning []")
+        channel_map = [];
+    end
 end
