@@ -10,7 +10,11 @@ function [channel_map] = load_BT_channel_map(params, type_to_load)
         if params.hellbender
             BT_BI_file = strrep(BT_BI_file, '\', '/'); % linux insetad of windows
         end
-        channel_map = load(BT_BI_file);
+        if ~exist(BT_BI_file, 'file')
+            channel_map = [];
+        else
+            channel_map = load(BT_BI_file);
+        end
     elseif strcmp(type_to_load, 'WI')
         % BT_BI_data_std = control_EMS_matrices_std; % Rename for clarity
     
@@ -26,7 +30,11 @@ function [channel_map] = load_BT_channel_map(params, type_to_load)
     else
         error("type_to_load %s is NotImplemented for function load_BT_channel_maps")
     end
-    channel_map = channel_map.channels_to_bt_es;
+    if ~isempty(channel_map)
+        channel_map = channel_map.channels_to_bt_es;
+    else
+        channel_map = [];
+    end
     if isempty(keys(channel_map))
         warning("channel_map is empty. returning []")
         channel_map = [];
